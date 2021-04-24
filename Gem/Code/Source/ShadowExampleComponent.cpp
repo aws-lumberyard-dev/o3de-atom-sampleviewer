@@ -45,6 +45,11 @@ namespace AtomSampleViewer
         AZ::Color::CreateZero(),
         AZ::Color::CreateZero()
     };
+
+    AZ::Color ShadowExampleComponent::s_pointLightColors[] = {
+        // they will be initialized in the constructor.
+        AZ::Color::CreateZero(), AZ::Color::CreateZero(), AZ::Color::CreateZero()};
+
     const AZ::Render::ShadowmapSize ShadowExampleComponent::s_shadowmapImageSizes[] = 
     {
         AZ::Render::ShadowmapSize::Size256,
@@ -80,6 +85,10 @@ namespace AtomSampleViewer
         s_diskLightColors[0] = AZ::Colors::Red;
         s_diskLightColors[1] = AZ::Colors::Green;
         s_diskLightColors[2] = AZ::Colors::Blue;
+
+        s_pointLightColors[0] = AZ::Colors::Red;
+        s_pointLightColors[1] = AZ::Colors::Green;
+        s_pointLightColors[2] = AZ::Colors::Blue;
     }
 
     void ShadowExampleComponent::Reflect(AZ::ReflectContext* context)
@@ -135,10 +144,12 @@ namespace AtomSampleViewer
         RPI::Scene* scene = RPI::RPISystemInterface::Get()->GetDefaultScene().get();
         m_directionalLightFeatureProcessor = scene->GetFeatureProcessor<Render::DirectionalLightFeatureProcessorInterface>();
         m_diskLightFeatureProcessor = scene->GetFeatureProcessor<Render::DiskLightFeatureProcessorInterface>();
+        m_pointLightFeatureProcessor = scene->GetFeatureProcessor<Render::PointLightFeatureProcessorInterface>();
 
         CreateMeshes();
         CreateDirectionalLight();
         CreateDiskLights();
+        CreatePointLights();
 
         m_elapsedTime = 0.f;
         m_imguiSidebar.Activate();
@@ -159,6 +170,10 @@ namespace AtomSampleViewer
         for (DiskLightHandle& handle : m_diskLightHandles)
         {
             m_diskLightFeatureProcessor->ReleaseLight(handle);
+        }
+        for (PointLightHandle& handle : m_pointLightHandles)
+        {
+            m_pointLightFeatureProcessor->ReleaseLight(handle);
         }
 
         m_imguiSidebar.Deactivate();
@@ -215,6 +230,15 @@ namespace AtomSampleViewer
                 Vector3::CreateZero());
             m_diskLightFeatureProcessor->SetPosition(m_diskLightHandles[index], location);
             m_diskLightFeatureProcessor->SetDirection(m_diskLightHandles[index], transform.GetBasis(1));
+        }
+
+        // Point Lights Transform
+        for (uint32_t index = 0; index < PointLightCount; ++index)
+        {
+            const float angle = m_diskLightRotationAngle + index * Constants::TwoPi / 3;
+            const auto location = Vector3(diskLightDist * sinf(angle), diskLightDist * cosf(angle), m_diskLightHeights[index]);
+            const auto transform = Transform::CreateLookAt(location, Vector3::CreateZero());
+            m_pointLightFeatureProcessor->SetPosition(m_pointLightHandles[index], location);
         }
 
         Camera::CameraRequestBus::Event(
@@ -428,6 +452,32 @@ namespace AtomSampleViewer
                 featureProcessor->SetPcfMethod(handle, m_pcfMethod[index]);
             }
             m_diskLightHandles[index] = handle;
+        }
+    }
+    void ShadowExampleComponent::CreatePointLights()
+    {
+        using namespace AZ;
+        Render::PointLightFeatureProcessorInterface* const featureProcessor = m_pointLightFeatureProcessor;
+
+        for (uint32_t index = 0; index < PointLightCount; ++index)
+        {
+            const PointLightHandle handle = featureProcessor->AcquireLight();
+
+            AZ::Render::PhotometricColor<AZ::Render::PhotometricUnit::Candela> lightColor(
+                s_diskLightColors[index] * m_diskLightIntensities[index]);
+            featureProcessor->SetRgbIntensity(handle, lightColor);
+            featureProcessor->SetAttenuationRadius(handle, sqrtf(m_diskLightIntensities[index] / CutoffIntensity));
+            //featureProcessor->SetShadowsEnabled(handle, m_diskLightShadowEnabled[index]);
+            if (m_pointLightShadowEnabled[index])
+            {
+                //featureProcessor->SetShadowmapMaxResolution(handle, s_shadowmapImageSizes[m_diskLightImageSizeIndices[index]]);
+                //featureProcessor->SetShadowFilterMethod(handle, s_shadowFilterMethods[m_shadowFilterMethodIndicesDisk[index]]);
+                //featureProcessor->SetSofteningBoundaryWidthAngle(handle, AZ::DegToRad(m_boundaryWidthsDisk[index]));
+                //featureProcessor->SetPredictionSampleCount(handle, m_predictionSampleCountsDisk[index]);
+                //featureProcessor->SetFilteringSampleCount(handle, m_filteringSampleCountsDisk[index]);
+                //featureProcessor->SetPcfMethod(handle, m_pcfMethod[index]);
+            }
+            m_pointLightHandles[index] = handle;
         }
     }
 

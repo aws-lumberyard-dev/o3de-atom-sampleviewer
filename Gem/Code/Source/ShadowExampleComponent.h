@@ -18,6 +18,9 @@
 #include <Atom/Feature/CoreLights/ShadowConstants.h>
 #include <Atom/Feature/CoreLights/DiskLightFeatureProcessorInterface.h>
 
+#include <Atom/Feature/CoreLights/PointLightFeatureProcessorInterface.h>
+
+
 #include <AzCore/Component/TickBus.h>
 
 #include <Utils/ImGuiSidebar.h>
@@ -51,6 +54,7 @@ namespace AtomSampleViewer
     private:
         using DirectionalLightHandle = AZ::Render::DirectionalLightFeatureProcessorInterface::LightHandle;
         using DiskLightHandle = AZ::Render::DiskLightFeatureProcessorInterface::LightHandle;
+        using PointLightHandle = AZ::Render::PointLightFeatureProcessorInterface::LightHandle;
         
         // AZ::TickBus::Handler overrides...
         void OnTick(float deltaTime, AZ::ScriptTimePoint time);
@@ -68,18 +72,21 @@ namespace AtomSampleViewer
         void CreateMeshes();
         void CreateDirectionalLight();
         void CreateDiskLights();
+        void CreatePointLights();
         void SetInitialShadowParams();
         void SetupDebugFlags();
 
         void DrawSidebar();
 
         static constexpr uint32_t DiskLightCount = 3;
+        static constexpr uint32_t PointLightCount = 3;
         static constexpr float ConeAngleInnerRatio = 0.9f;
         static constexpr float CutoffIntensity = 0.1f;
         static constexpr float FarClipDistance = 20.f;
 
         static const AZ::Color DirectionalLightColor;
         static AZ::Color s_diskLightColors[DiskLightCount];
+        static AZ::Color s_pointLightColors[DiskLightCount];
         
         // Mesh Handles
         using MeshHandle = AZ::Render::MeshFeatureProcessorInterface::MeshHandle;
@@ -89,8 +96,10 @@ namespace AtomSampleViewer
         // lights
         AZ::Render::DirectionalLightFeatureProcessorInterface* m_directionalLightFeatureProcessor = nullptr;
         AZ::Render::DiskLightFeatureProcessorInterface* m_diskLightFeatureProcessor = nullptr;
+        AZ::Render::PointLightFeatureProcessorInterface* m_pointLightFeatureProcessor = nullptr;
         DirectionalLightHandle m_directionalLightHandle;
         DiskLightHandle m_diskLightHandles[DiskLightCount];
+        PointLightHandle m_pointLightHandles[PointLightCount];
 
         // asset
         AZ::Data::Asset<AZ::RPI::ModelAsset> m_bunnyModelAsset;
@@ -139,6 +148,7 @@ namespace AtomSampleViewer
         bool m_isDebugColoringEnabled = false;
         bool m_isDebugBoundingBoxEnabled = false;
         bool m_diskLightShadowEnabled[DiskLightCount] = {true, true, true};
+        bool m_pointLightShadowEnabled[PointLightCount] = {true, true, true};
 
         // Edge-softening of shadows
         static const AZ::Render::ShadowFilterMethod s_shadowFilterMethods[];
