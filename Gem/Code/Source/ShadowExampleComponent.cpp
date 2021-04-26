@@ -467,10 +467,10 @@ namespace AtomSampleViewer
                 s_diskLightColors[index] * m_diskLightIntensities[index]);
             featureProcessor->SetRgbIntensity(handle, lightColor);
             featureProcessor->SetAttenuationRadius(handle, sqrtf(m_diskLightIntensities[index] / CutoffIntensity));
-            //featureProcessor->SetShadowsEnabled(handle, m_diskLightShadowEnabled[index]);
+            featureProcessor->SetShadowsEnabled(handle, m_diskLightShadowEnabled[index]);
             if (m_pointLightShadowEnabled[index])
             {
-                //featureProcessor->SetShadowmapMaxResolution(handle, s_shadowmapImageSizes[m_diskLightImageSizeIndices[index]]);
+                featureProcessor->SetShadowmapMaxResolution(handle, s_shadowmapImageSizes[m_diskLightImageSizeIndices[index]]);
                 //featureProcessor->SetShadowFilterMethod(handle, s_shadowFilterMethods[m_shadowFilterMethodIndicesDisk[index]]);
                 //featureProcessor->SetSofteningBoundaryWidthAngle(handle, AZ::DegToRad(m_boundaryWidthsDisk[index]));
                 //featureProcessor->SetPredictionSampleCount(handle, m_predictionSampleCountsDisk[index]);
