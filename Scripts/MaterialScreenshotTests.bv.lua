@@ -173,6 +173,8 @@ GenerateMaterialScreenshot('Level I', '005_UseDisplacement_With_BlendMaskVertexC
 GenerateMaterialScreenshot('Level I', '005_UseDisplacement_With_BlendMaskTexture',               {lighting="Blouberg Sunrise 1 (Alt)", model=g_modelWithLayerMask, cameraHeading=180.0, cameraPitch=45.0, cameraDistance=20.0, cameraZ=-0.5})
 GenerateMaterialScreenshot('Level I', '005_UseDisplacement_With_BlendMaskTexture_NoHeightmaps',  {lighting="Blouberg Sunrise 1 (Alt)", model=g_modelWithLayerMask, cameraHeading=180.0, cameraPitch=45.0, cameraDistance=20.0, cameraZ=-0.5})
 GenerateMaterialScreenshot('Level I', '005_UseDisplacement_With_BlendMaskTexture_AllSameHeight', {lighting="Blouberg Sunrise 1 (Alt)", model=g_modelWithLayerMask, cameraHeading=180.0, cameraPitch=45.0, cameraDistance=20.0, cameraZ=-0.5})
+GenerateMaterialScreenshot('Level I', '006_UseDisplacement_ErosionExample',                      {lighting="Blouberg Sunrise 1 (Alt)", model=g_modelWithLayerMask, cameraHeading=180.0, cameraPitch=45.0, cameraDistance=20.0, cameraZ=-0.5})
+GenerateMaterialScreenshot('Level I', '006_UseDisplacement_ErosionExample_TEMPReversed',         {lighting="Blouberg Sunrise 1 (Alt)", model=g_modelWithLayerMask, cameraHeading=180.0, cameraPitch=45.0, cameraDistance=20.0, cameraZ=-0.5})
 
 ----------------------------------------------------------------------
 -- Skin Materials...
