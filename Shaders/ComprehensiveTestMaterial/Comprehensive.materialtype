@@ -4,12 +4,12 @@
         "version": 1,
         "groups": [
             {
-                "id": "stacks",
+                "name": "stacks",
                 "displayName": "Stack Settings",
                 "description": "Settings for the oscillating stack of slices that form the shell."
             },
             {
-                "id": "light",
+                "name": "light",
                 "displayName": "Light Settings",
                 "description": "Controls the direction of the light."
             }
@@ -17,18 +17,18 @@
         "properties": {
             "stacks": [
                 {
-                    "id": "color",
+                    "name": "color",
                     "displayName": "Stacks Color",
                     "description": "The color for the stacks.",
                     "type": "color",
                     "defaultValue": [ 0.9, 0.9, 0.9 ],
                     "connection": {
                         "type": "shaderInput",
-                        "id": "m_color"
+                        "name": "m_color"
                     }
                 },
                 {
-                    "id": "stackCount",
+                    "name": "stackCount",
                     "displayName": "Stack Count",
                     "description": "The number of independent stacks. This demonstrates a shader option connection that applies to all shaders in the list, because it doesn't specify a shaderIndex.",
                     "type": "uint",
@@ -38,11 +38,11 @@
                     "step": 1,
                     "connection": {
                         "type": "shaderOption",
-                        "id": "o_stackCount"
+                        "name": "o_stackCount"
                     }
                 },
                 {
-                    "id": "sliceThickness",
+                    "name": "sliceThickness",
                     "displayName": "Slice Thickness",
                     "description": "Sets how thick each slice should be. Thicker slices will reduce the number of slices composing the object.",
                     "type": "float",
@@ -52,59 +52,59 @@
                     "step": 0.001,
                     "connection": {
                         "type": "shaderInput",
-                        "id": "m_sliceThickness"
+                        "name": "m_sliceThickness"
                     }
                 },
                 {
-                    "id": "animate1",
+                    "name": "animate1",
                     "displayName": "Animate Stack 1",
                     "description": "Whether the first stack of slices should be animated. This demonstrates a shader option connection to a specific shaders in the list, because it specifies a shaderIndex.",
                     "type": "bool",
                     "defaultValue": true,
                     "connection": {
                         "type": "shaderOption",
-                        "id": "o_animated",
+                        "name": "o_animated",
                         "shaderIndex": 0
                     }
                 },
                 {
-                    "id": "animate2",
+                    "name": "animate2",
                     "displayName": "Animate Stack 2",
                     "description": "Whether the second stack of slices should be animated. This demonstrates a shader option connection to a specific shaders in the list, because it specifies a shaderIndex.",
                     "type": "bool",
                     "defaultValue": true,
                     "connection": {
                         "type": "shaderOption",
-                        "id": "o_animated",
+                        "name": "o_animated",
                         "shaderIndex": 1
                     }
                 },
                 {
-                    "id": "animate3",
+                    "name": "animate3",
                     "displayName": "Animate Stack 3",
                     "description": "Whether the third stack of slices should be animated. This demonstrates a shader option connection to a specific shaders in the list, because it specifies a shaderIndex.",
                     "type": "bool",
                     "defaultValue": true,
                     "connection": {
                         "type": "shaderOption",
-                        "id": "o_animated",
+                        "name": "o_animated",
                         "shaderIndex": 2
                     }
                 },
                 {
-                    "id": "animate4",
+                    "name": "animate4",
                     "displayName": "Animate Stack 4",
                     "description": "Whether the fourth stack of slices should be animated. This demonstrates a shader option connection to a specific shaders in the list, because it specifies a shaderIndex.",
                     "type": "bool",
                     "defaultValue": true,
                     "connection": {
                         "type": "shaderOption",
-                        "id": "o_animated",
+                        "name": "o_animated",
                         "shaderIndex": 3
                     }
                 },
                 {
-                    "id": "highlightMainSlices",
+                    "name": "highlightMainSlices",
                     "displayName": "Highlight Permanent Slices",
                     "description": "Highlight the first two stacks of slices, which are always present. This demonstrates a property that is connected to multiple shader settings.",
                     "type": "bool",
@@ -112,18 +112,18 @@
                     "connection": [
                         {
                             "type": "shaderOption",
-                            "id": "o_highlighted",
+                            "name": "o_highlighted",
                             "shaderIndex": 0
                         },
                         {
                             "type": "shaderOption",
-                            "id": "o_highlighted",
+                            "name": "o_highlighted",
                             "shaderIndex": 1
                         }
                     ]
                 },
                 {
-                    "id": "highlightLastStack",
+                    "name": "highlightLastStack",
                     "displayName": "Highlight Last Stack",
                     "description": "Highlight the last stack of slices. This demonstrates a shader option that is applied by a functor rather than a direct connection. See StacksShaderCollectionFunctor and 'o_highlighted2'.",
                     "type": "bool",
@@ -132,7 +132,7 @@
             ],
             "light": [
                 {
-                    "id": "azimuthDegrees",
+                    "name": "azimuthDegrees",
                     "displayName": "Azimuth (degrees)",
                     "type": "float",
                     "min": 0.0,
@@ -140,7 +140,7 @@
                     "step": 1.0
                 },
                 {
-                    "id": "elevationDegrees",
+                    "name": "elevationDegrees",
                     "displayName": "Elevation (degrees)",
                     "type": "float",
                     "min": -90.0,

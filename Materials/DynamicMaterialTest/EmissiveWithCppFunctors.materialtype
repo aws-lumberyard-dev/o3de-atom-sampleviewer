@@ -4,14 +4,14 @@
         "version": 3,
         "groups": [
             {
-                "id": "emissive",
+                "name": "emissive",
                 "displayName": "Settings"
             }
         ],
         "properties": {
             "emissive": [
                 {
-                    "id": "unit",
+                    "name": "unit",
                     "displayName": "Units",
                     "description": "The photometric units of the Intensity property.",
                     "type": "Enum",
@@ -19,18 +19,18 @@
                     "defaultValue": "Ev100"
                 },
                 {
-                    "id": "color",
+                    "name": "color",
                     "displayName": "Color",
                     "description": "Color is displayed as sRGB but the values are stored as linear color.",
                     "type": "Color",
                     "defaultValue": [ 1.0, 1.0, 1.0 ],
                     "connection": {
                         "type": "ShaderInput",
-                        "id": "m_emissiveColor"
+                        "name": "m_emissiveColor"
                     }
                 },
                 {
-                    "id": "intensity",
+                    "name": "intensity",
                     "displayName": "Intensity",
                     "description": "The amount of energy emitted.",
                     "type": "Float",
@@ -41,17 +41,17 @@
                     "softMax": 16
                 },
                 {
-                    "id": "textureMap",
+                    "name": "textureMap",
                     "displayName": "Texture Map",
                     "description": "Texture map for defining emissive area.",
                     "type": "Image",
                     "connection": {
                         "type": "ShaderInput",
-                        "id": "m_emissiveMap"
+                        "name": "m_emissiveMap"
                     }
                 },
                 {
-                    "id": "useTexture",
+                    "name": "useTexture",
                     "displayName": "Use Texture",
                     "description": "Whether to use the texture map.",
                     "type": "Bool",

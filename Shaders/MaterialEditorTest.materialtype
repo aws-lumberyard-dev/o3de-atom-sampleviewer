@@ -4,17 +4,17 @@
         "version": 1,
         "groups": [
             {
-                "id": "normal",
+                "name": "normal",
                 "displayName": "Normal Settings",
                 "description": "Properties for configuring the surface normals."
             },
             {
-                "id": "diffuse",
+                "name": "diffuse",
                 "displayName": "Diffuse Settings",
                 "description": "Properties for configuring the surface diffuse."
             },
             {
-                "id": "specular",
+                "name": "specular",
                 "displayName": "Specular Settings",
                 "description": "Properties for configuring the surface specular."
             }
@@ -22,19 +22,19 @@
         "properties": {
             "normal": [
                 {
-                    "id": "myBool",
+                    "name": "myBool",
                     "displayName": "My Bool",
                     "description": "This is a tooltip for MyBool",
                     "type": "bool"
                 },
                 {
-                    "id": "myFloat",
+                    "name": "myFloat",
                     "displayName": "My Float",
                     "description": "This is a tooltip for MyFloat",
                     "type": "float"
                 },
                 {
-                    "id": "myVector2",
+                    "name": "myVector2",
                     "displayName": "My Vector2",
                     "description": "This is a tooltip for MyVector2",
                     "type": "vector2"
@@ -42,7 +42,7 @@
             ],
             "diffuse": [
                 {
-                    "id": "myInt",
+                    "name": "myInt",
                     "displayName": "My Int",
                     "description": "This is a tooltip for MyInt",
                     "type": "int",
@@ -50,13 +50,13 @@
                     "max": 100
                 },
                 {
-                    "id": "myColor",
+                    "name": "myColor",
                     "displayName": "My Color",
                     "description": "This is a tooltip for MyColor",
                     "type": "color"
                 },
                 {
-                    "id": "myImage",
+                    "name": "myImage",
                     "displayName": "My Image",
                     "description": "This is a tooltip for MyImage",
                     "type": "image"
@@ -64,7 +64,7 @@
             ],
             "specular": [
                 {
-                    "id": "myUInt",
+                    "name": "myUInt",
                     "displayName": "My UInt",
                     "description": "This is a tooltip for MyUInt",
                     "type": "uint",
@@ -72,13 +72,13 @@
                     "step": 5
                 },
                 {
-                    "id": "myVector3",
+                    "name": "myVector3",
                     "displayName": "My Vector3",
                     "description": "This is a tooltip for MyVector3",
                     "type": "vector3"
                 },
                 {
-                    "id": "myVector4",
+                    "name": "myVector4",
                     "displayName": "My Vector4",
                     "description": "This is a tooltip for MyVector4",
                     "type": "vector4"
