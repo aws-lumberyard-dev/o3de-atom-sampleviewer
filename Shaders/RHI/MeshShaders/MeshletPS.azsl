@@ -1,0 +1,115 @@
+//*********************************************************
+//
+// Copyright (c) Microsoft. All rights reserved.
+// This code is licensed under the MIT License (MIT).
+// THIS CODE IS PROVIDED *AS IS* WITHOUT WARRANTY OF
+// ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING ANY
+// IMPLIED WARRANTIES OF FITNESS FOR A PARTICULAR
+// PURPOSE, MERCHANTABILITY, OR NON-INFRINGEMENT.
+//
+//*********************************************************
+
+#include <Atom/Features/SrgSemantics.azsli>
+
+ShaderResourceGroup MeshShaderSRG : SRG_PerDraw
+{
+    column_major float4x4 WorldViewProj;
+}
+
+struct MSvert
+{
+    float4 pos : SV_POSITION;
+    float3 color : COLOR0;    
+};
+
+float4 TransformPosition(float4 v)
+{
+    return mul(v, MeshShaderSRG::WorldViewProj);
+}
+
+
+float4 TransformPosition(float x, float y, float z)
+{
+    return mul(float4(x,y,z,1), MeshShaderSRG::WorldViewProj);
+}
+
+static float4 cubeVertices[] = 
+{
+    float4(-0.5f, -0.5f, -0.5f, 1.0f),
+    float4(-0.5f, -0.5f, 0.5f, 1.0f),
+    float4(-0.5f, 0.5f, -0.5f, 1.0f),
+    float4(-0.5f, 0.5f, 0.5f, 1.0f),
+    float4(0.5f, -0.5f, -0.5f, 1.0f),
+    float4(0.5f, -0.5f, 0.5f, 1.0f),
+    float4(0.5f, 0.5f, -0.5f, 1.0f),
+    float4(0.5f, 0.5f, 0.5f, 1.0f),
+};
+
+static float3 cubeColors[] = 
+{
+    float3(0.0f, 0.0f, 0.0f),
+    float3(0.0f, 0.0f, 1.0f),
+    float3(0.0f, 1.0f, 0.0f),
+    float3(0.0f, 1.0f, 1.0f),
+    float3(1.0f, 0.0f, 0.0f),
+    float3(1.0f, 0.0f, 1.0f),
+    float3(1.0f, 1.0f, 0.0f),
+    float3(1.0f, 1.0f, 1.0f),
+};
+
+static uint3 cubeIndices[] = 
+{
+    uint3(0, 2, 1),
+    uint3(1, 2, 3),
+    uint3(4, 5, 6),
+    uint3(5, 7, 6),
+    uint3(0, 1, 5),
+    uint3(0, 5, 4),
+    uint3(2, 6, 7),
+    uint3(2, 7, 3),
+    uint3(0, 4, 6),
+    uint3(0, 6, 2),
+    uint3(1, 3, 7),
+    uint3(1, 7, 5),
+};
+
+ 
+[NumThreads(12, 1, 1)]
+[OutputTopology("triangle")]
+void MainMS(
+    in uint groupThreadId : SV_GroupThreadID,
+    out MSvert outVerts[8],
+    out uint3 outIndices[12])  
+    //out vertices MSvert outVerts[8],
+    //out indices uint3 outIndices[12]) 
+{
+    const uint numVertices = 8;
+    const uint numPrimitives = 12;
+
+    SetMeshOutputCounts(numVertices, numPrimitives);
+ 
+    if(groupThreadId < numVertices)
+    {
+        float4 pos = cubeVertices[groupThreadId];
+        outVerts[groupThreadId].pos = TransformPosition(pos);
+        outVerts[groupThreadId].color = cubeColors[groupThreadId];
+    }
+
+    outIndices[groupThreadId] = cubeIndices[groupThreadId];
+}  
+     
+  
+struct PSOutput
+{
+    float4 m_color : SV_Target;
+};
+
+   
+PSOutput MainMSPS(MSvert IN) 
+{
+    PSOutput OUT;
+    
+    OUT.m_color = float4(IN.color, 1);
+    return OUT;
+}
+

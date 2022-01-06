@@ -45,6 +45,7 @@
 #include <RHI/DualSourceBlendingComponent.h>
 #include <RHI/IndirectRenderingExampleComponent.h>
 #include <RHI/InputAssemblyExampleComponent.h>
+#include <RHI/MeshShaderExampleComponent.h>
 #include <RHI/SubpassExampleComponent.h>
 #include <RHI/MRTExampleComponent.h>
 #include <RHI/MSAAExampleComponent.h>
@@ -238,6 +239,7 @@ namespace AtomSampleViewer
             NewRHISample<DualSourceBlendingComponent>("DualSourceBlending", []() {return Utils::GetRHIDevice()->GetFeatures().m_dualSourceBlending; }),
             NewRHISample<IndirectRenderingExampleComponent>("IndirectRendering", []() {return Utils::GetRHIDevice()->GetFeatures().m_indirectCommandTier > RHI::IndirectCommandTiers::Tier0; }),
             NewRHISample<InputAssemblyExampleComponent>("InputAssembly"),
+            NewRHISample<MeshShaderExampleComponent>("MeshShader"),
             NewRHISample<MSAAExampleComponent>("MSAA"),
             NewRHISample<MultipleViewsComponent>("MultipleViews"),
             NewRHISample<MRTExampleComponent>("MultiRenderTarget"),

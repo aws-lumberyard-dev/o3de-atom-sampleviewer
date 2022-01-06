@@ -46,6 +46,8 @@ set(FILES
     Source/RHI/IndirectRenderingExampleComponent.h
     Source/RHI/InputAssemblyExampleComponent.cpp
     Source/RHI/InputAssemblyExampleComponent.h
+    Source/RHI/MeshShaderExampleComponent.cpp
+    Source/RHI/MeshShaderExampleComponent.h
     Source/RHI/MRTExampleComponent.h
     Source/RHI/MRTExampleComponent.cpp
     Source/RHI/MSAAExampleComponent.h
