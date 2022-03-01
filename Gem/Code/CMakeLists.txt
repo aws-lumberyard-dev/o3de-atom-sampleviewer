@@ -44,6 +44,7 @@ ly_add_target(
             Gem::Atom_Feature_Common.Static
             Gem::Atom_Component_DebugCamera.Static
             Gem::AtomSampleViewer.Lib.Static
+            Gem::Meshlets.Static
             Gem::Profiler.Static
 )
 
@@ -61,6 +62,7 @@ ly_add_target(
             Gem::Atom_AtomBridge.Static
             Gem::AtomSampleViewer.Private.Static
             Gem::ImGui.imguilib
+            Gem::Meshlets.Static
 )
 
 # if enabled, AtomSampleViewer is used by the Client and ServerLauncher
