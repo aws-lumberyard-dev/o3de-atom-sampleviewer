@@ -20,6 +20,7 @@ set(ENABLED_GEMS
     ImGui
     Profiler
     Sponza
+    Meshlets
     MaterialEditor
     UiBasics
     StreamerProfiler

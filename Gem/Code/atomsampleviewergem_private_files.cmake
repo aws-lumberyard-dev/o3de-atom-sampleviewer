@@ -7,6 +7,8 @@
 #
 
 set(FILES
+    Source/MeshletsExampleComponent.cpp
+    Source/MeshletsExampleComponent.h
     Source/AtomSampleViewerOptions.h
     Source/AtomSampleViewerSystemComponent.cpp
     Source/AtomSampleViewerSystemComponent.h
