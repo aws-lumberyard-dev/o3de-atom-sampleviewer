@@ -19,4 +19,5 @@ set(ENABLED_GEMS
     EditorPythonBindings
     ImGui
     Profiler
+    Meshlets
 )
