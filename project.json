@@ -18,5 +18,10 @@
         "use_patch_obb": "false",
         "rc_obb_job": "RCJob_Generic_Android_MakeObb.xml"
     },
-    "engine": "o3de"
+    "external_subdirectories": [
+        "Gem",
+        "Standalone"
+    ],
+    "engine": "o3de",
+    "gem_names": []
 }

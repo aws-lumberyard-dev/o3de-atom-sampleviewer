@@ -5,9 +5,10 @@
 # SPDX-License-Identifier: Apache-2.0 OR MIT
 #
 #
-
-
-ly_get_list_relative_pal_filename(pal_dir ${CMAKE_CURRENT_LIST_DIR}/Platform/${PAL_PLATFORM_NAME})
+cmake_path(GET CMAKE_CURRENT_LIST_DIR PARENT_PATH project_path)
+set(project_json ${project_path}/project.json)
+o3de_restricted_path(${project_json} project_restricted_path project_parent_relative_path)
+o3de_pal_dir(pal_dir ${CMAKE_CURRENT_LIST_DIR}/Platform/${PAL_PLATFORM_NAME} ${project_restricted_path} ${project_path} ${project_parent_relative_path})
 
 include(${pal_dir}/atomsampleviewer_traits_${PAL_PLATFORM_NAME_LOWERCASE}.cmake)
 

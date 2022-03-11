@@ -440,7 +440,7 @@ namespace AtomSampleViewer
         bool targetSampleFound = false;
 
         const AzFramework::CommandLine* commandLine = nullptr;
-        AzFramework::ApplicationRequests::Bus::BroadcastResult(commandLine, &AzFramework::ApplicationRequests::GetCommandLine);
+        AzFramework::ApplicationRequests::Bus::BroadcastResult(commandLine, &AzFramework::ApplicationRequests::GetApplicationCommandLine);
         if (commandLine->HasSwitch("sample"))
         {
             AZStd::string targetSampleName = commandLine->GetSwitchValue("sample", 0);

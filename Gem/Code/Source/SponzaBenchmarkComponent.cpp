@@ -117,7 +117,7 @@ namespace AtomSampleViewer
 
         // Capture screenshots on specific frames.
         const AzFramework::CommandLine* commandLine = nullptr;
-        AzFramework::ApplicationRequests::Bus::BroadcastResult(commandLine, &AzFramework::ApplicationRequests::GetCommandLine);
+        AzFramework::ApplicationRequests::Bus::BroadcastResult(commandLine, &AzFramework::ApplicationRequests::GetApplicationCommandLine);
 
         static const char* screenshotFlagName = "screenshot";
         if (commandLine && commandLine->HasSwitch(screenshotFlagName))
