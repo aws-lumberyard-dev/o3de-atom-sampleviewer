@@ -178,11 +178,11 @@ namespace AtomSampleViewer
         GetMeshFeatureProcessor()->ReleaseMesh(m_meshHandle);
         GetMeshFeatureProcessor()->ReleaseMesh(m_groundPlandMeshHandle);
 
-        if (m_meshetModel)
+        if (m_meshetsModel)
         {
-            GetMeshFeatureProcessor()->ReleaseMesh(m_meshletMeshHandle);
-            delete m_meshetModel;
-            m_meshetModel = nullptr;
+            GetMeshFeatureProcessor()->ReleaseMesh(m_meshletsMeshHandle);
+            delete m_meshetsModel;
+            m_meshetsModel = nullptr;
         }
 
         m_modelAsset = {};
@@ -332,7 +332,7 @@ namespace AtomSampleViewer
         {
             m_modelAsset = {};
             GetMeshFeatureProcessor()->ReleaseMesh(m_meshHandle);
-            GetMeshFeatureProcessor()->ReleaseMesh(m_meshletMeshHandle);
+            GetMeshFeatureProcessor()->ReleaseMesh(m_meshletsMeshHandle);
             return;
         }
 
@@ -370,11 +370,11 @@ namespace AtomSampleViewer
 
             GetMeshFeatureProcessor()->ReleaseMesh(m_meshHandle);
 
-            if (m_meshetModel)
+            if (m_meshetsModel)
             {   // delete the meshlet model so it will be recreated on the next tick
-                GetMeshFeatureProcessor()->ReleaseMesh(m_meshletMeshHandle);
-                delete m_meshetModel;
-                m_meshetModel = nullptr;
+                GetMeshFeatureProcessor()->ReleaseMesh(m_meshletsMeshHandle);
+                delete m_meshetsModel;
+                m_meshetsModel = nullptr;
             }
 
             m_meshHandle = GetMeshFeatureProcessor()->AcquireMesh(AZ::Render::MeshHandleDescriptor{ m_modelAsset }, m_materialOverrideInstance);
@@ -453,23 +453,23 @@ namespace AtomSampleViewer
         }
 
 
-        if (!m_meshetModel)
+        if (!m_meshetsModel)
         {
-            m_meshetModel = new AZ::Meshlets::MeshletModel(m_modelAsset);
-            if (m_meshetModel->GetMeshletModel())
+            m_meshetsModel = new AZ::Meshlets::MeshletsModel(m_modelAsset);
+            if (m_meshetsModel->GetMeshletsModel())
             {
                 static constexpr const char meshletDebugMaterialPath[] = "objects/adi/debugshadermaterial_01.azmaterial";
 
                 AZ::Data::Asset<AZ::RPI::MaterialAsset> meshletDebugMaterialAsset =
                     AZ::RPI::AssetUtils::LoadAssetByProductPath<AZ::RPI::MaterialAsset>(meshletDebugMaterialPath, AZ::RPI::AssetUtils::TraceLevel::Error);
 
-                m_meshletDebugMaterial = AZ::RPI::Material::FindOrCreate(meshletDebugMaterialAsset);
+                m_meshletsDebugMaterial = AZ::RPI::Material::FindOrCreate(meshletDebugMaterialAsset);
 
-                m_meshletModelAsset = m_meshetModel->GetMeshletModel()->GetModelAsset();
-                m_meshletMeshHandle = GetMeshFeatureProcessor()->AcquireMesh(AZ::Render::MeshHandleDescriptor{ m_meshletModelAsset }, m_meshletDebugMaterial);// m_materialOverrideInstance);
+                m_meshletsModelAsset = m_meshetsModel->GetMeshletsModel()->GetModelAsset();
+                m_meshletsMeshHandle = GetMeshFeatureProcessor()->AcquireMesh(AZ::Render::MeshHandleDescriptor{ m_meshletsModelAsset }, m_meshletsDebugMaterial);// m_materialOverrideInstance);
 
                 AZ::Transform translation = AZ::Transform::CreateTranslation(AZ::Vector3(0, 2.0, 0));
-                GetMeshFeatureProcessor()->SetTransform(m_meshletMeshHandle, translation);
+                GetMeshFeatureProcessor()->SetTransform(m_meshletsMeshHandle, translation);
             }
         }
 
