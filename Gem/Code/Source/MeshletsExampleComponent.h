@@ -115,10 +115,10 @@ namespace AtomSampleViewer
         AZ::Data::Asset<AZ::RPI::ModelAsset> m_modelAsset;
 
         // This is the data stored for the copied mesh with the new generated meshlets structure.
-        AZ::Data::Instance<AZ::RPI::Material> m_meshletDebugMaterial;
-        AZ::Meshlets::MeshletModel* m_meshetModel = nullptr;
-        AZ::Data::Asset<AZ::RPI::ModelAsset> m_meshletModelAsset;
-        AZ::Render::MeshFeatureProcessorInterface::MeshHandle m_meshletMeshHandle;
+        AZ::Data::Instance<AZ::RPI::Material> m_meshletsDebugMaterial;
+        AZ::Meshlets::MeshletsModel* m_meshetsModel = nullptr;
+        AZ::Data::Asset<AZ::RPI::ModelAsset> m_meshletsModelAsset;
+        AZ::Render::MeshFeatureProcessorInterface::MeshHandle m_meshletsMeshHandle;
 
         AZ::Data::Asset<AZ::RPI::ModelAsset> m_groundPlaneModelAsset;
         AZ::Render::MeshFeatureProcessorInterface::MeshHandle m_groundPlandMeshHandle;
