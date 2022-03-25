@@ -39,6 +39,7 @@
 
 #include <RHI/BasicRHIComponent.h>
 
+#include <MeshletsFeatureProcessor.h>
 
 namespace AtomSampleViewer
 {
@@ -183,6 +184,13 @@ namespace AtomSampleViewer
             GetMeshFeatureProcessor()->ReleaseMesh(m_meshletsMeshHandle);
             delete m_meshetsModel;
             m_meshetsModel = nullptr;
+
+            if (GetMeshletsFeatureProcessor())
+            {
+                m_meshletsFeatureProcessor->RemoveMeshletsRenderObject(m_meshetsRenderObject);
+            }
+            delete m_meshetsRenderObject;
+            m_meshetsRenderObject = nullptr;
         }
 
         m_modelAsset = {};
@@ -191,6 +199,16 @@ namespace AtomSampleViewer
         m_materialOverrideInstance = nullptr;
 
         ShutdownLightingPresets();
+    }
+
+    AZ::Meshlets::MeshletsFeatureProcessor* MeshletsExampleComponent::GetMeshletsFeatureProcessor()
+    {
+        if (!m_meshletsFeatureProcessor && m_scene)
+        {
+            m_meshletsFeatureProcessor = m_scene->GetFeatureProcessor<AZ::Meshlets::MeshletsFeatureProcessor>();
+        }
+
+        return m_meshletsFeatureProcessor;
     }
 
     void MeshletsExampleComponent::OnTick([[maybe_unused]] float deltaTime, [[maybe_unused]] AZ::ScriptTimePoint time)
@@ -333,6 +351,11 @@ namespace AtomSampleViewer
             m_modelAsset = {};
             GetMeshFeatureProcessor()->ReleaseMesh(m_meshHandle);
             GetMeshFeatureProcessor()->ReleaseMesh(m_meshletsMeshHandle);
+
+            if (GetMeshletsFeatureProcessor())
+            {
+                m_meshletsFeatureProcessor->RemoveMeshletsRenderObject(m_meshetsRenderObject);
+            }
             return;
         }
 
@@ -375,6 +398,9 @@ namespace AtomSampleViewer
                 GetMeshFeatureProcessor()->ReleaseMesh(m_meshletsMeshHandle);
                 delete m_meshetsModel;
                 m_meshetsModel = nullptr;
+
+                delete m_meshetsRenderObject;
+                m_meshetsRenderObject = nullptr;
             }
 
             m_meshHandle = GetMeshFeatureProcessor()->AcquireMesh(AZ::Render::MeshHandleDescriptor{ m_modelAsset }, m_materialOverrideInstance);
@@ -470,6 +496,12 @@ namespace AtomSampleViewer
 
                 AZ::Transform translation = AZ::Transform::CreateTranslation(AZ::Vector3(0, 2.0, 0));
                 GetMeshFeatureProcessor()->SetTransform(m_meshletsMeshHandle, translation);
+            }
+
+            m_meshetsRenderObject = new AZ::Meshlets::MeshletsRenderObject(m_modelAsset);
+            if (m_meshetsRenderObject->GetMeshletsCount() && GetMeshletsFeatureProcessor())
+            {
+                m_meshletsFeatureProcessor->AddMeshletsRenderObject(m_meshetsRenderObject);
             }
         }
 
