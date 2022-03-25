@@ -24,6 +24,15 @@
 #include <Atom/Feature/SkyBox/SkyBoxFeatureProcessorInterface.h>
 
 #include <MeshletsAssets.h>
+#include <MeshletsRenderObject.h>
+
+namespace AZ
+{
+    namespace Meshlets
+    {
+        class MeshletsFeatureProcessor;
+    }
+}
 
 namespace AtomSampleViewer
 {
@@ -72,6 +81,8 @@ namespace AtomSampleViewer
         void ActivateLowEndPipeline();
         void DeactivateLowEndPipeline();
 
+        AZ::Meshlets::MeshletsFeatureProcessor* GetMeshletsFeatureProcessor();
+
         AZ::RPI::RenderPipelinePtr m_lowEndPipeline;
         AZ::RPI::RenderPipelinePtr m_originalPipeline;
 
@@ -110,6 +121,8 @@ namespace AtomSampleViewer
         bool m_useLowEndPipeline = false;
         bool m_switchPipeline = false;
 
+        AZ::Meshlets::MeshletsFeatureProcessor* m_meshletsFeatureProcessor = nullptr;
+
         AZ::Data::Instance<AZ::RPI::Material> m_materialOverrideInstance; //< Holds a copy of the material instance being used when m_enableMaterialOverride is true.
         AZ::Render::MeshFeatureProcessorInterface::MeshHandle m_meshHandle;
         AZ::Data::Asset<AZ::RPI::ModelAsset> m_modelAsset;
@@ -117,6 +130,7 @@ namespace AtomSampleViewer
         // This is the data stored for the copied mesh with the new generated meshlets structure.
         AZ::Data::Instance<AZ::RPI::Material> m_meshletsDebugMaterial;
         AZ::Meshlets::MeshletsModel* m_meshetsModel = nullptr;
+        AZ::Meshlets::MeshletsRenderObject* m_meshetsRenderObject = nullptr;
         AZ::Data::Asset<AZ::RPI::ModelAsset> m_meshletsModelAsset;
         AZ::Render::MeshFeatureProcessorInterface::MeshHandle m_meshletsMeshHandle;
 
