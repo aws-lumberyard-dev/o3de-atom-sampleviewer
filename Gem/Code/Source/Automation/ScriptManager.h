@@ -19,6 +19,7 @@
 #include <Automation/ImageComparisonConfig.h>
 #include <Utils/ImGuiAssetBrowser.h>
 #include <AzCore/Debug/ProfilerBus.h>
+#include <AzCore/Component/TickBus.h>
 
 namespace AZ
 {
@@ -52,6 +53,7 @@ namespace AtomSampleViewer
         , public AZ::Render::FrameCaptureNotificationBus::Handler
         , public AZ::Render::ProfilingCaptureNotificationBus::Handler
         , public AZ::Debug::ProfilerNotificationBus::Handler
+        , public AZ::TickBus::Handler
     {
     public:
         ScriptManager();
@@ -85,7 +87,8 @@ namespace AtomSampleViewer
 
         void ShowBackToIntroWarning();
 
-
+        // TickBus Overrides
+        void OnTick(float deltaTime, AZ::ScriptTimePoint scriptTime) override;
 
         // Registers functions in a BehaviorContext so they can be exposed to Lua scripts.
         static void ReflectScriptContext(AZ::BehaviorContext* context);
@@ -237,6 +240,9 @@ namespace AtomSampleViewer
 
         // show/hide imgui
         void SetShowImGui(bool show);
+
+        // Currently Polls SQS and pushes any messages as a script.
+        void PollAndExecuteScripts();
 
         struct TestSuiteExecutionConfig
         {

@@ -45,6 +45,8 @@ ly_add_target(
             Gem::Atom_Component_DebugCamera.Static
             Gem::AtomSampleViewer.Lib.Static
             Gem::Profiler.Static
+            3rdParty::AWSNativeSDK::Core
+            3rdParty::AWSNativeSDK::SQS
 )
 
 ly_add_target(

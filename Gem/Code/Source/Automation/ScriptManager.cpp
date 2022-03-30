@@ -35,6 +35,11 @@
 #include <AtomSampleViewerRequestBus.h>
 #include <Utils/Utils.h>
 
+#include <aws/core/Aws.h>
+#include <aws/sqs/SQSClient.h>
+#include <aws/sqs/model/ReceiveMessageRequest.h>
+#include <aws/sqs/model/ReceiveMessageResult.h>
+
 namespace AtomSampleViewer
 {
     ScriptManager* ScriptManager::s_instance = nullptr;
@@ -1990,4 +1995,42 @@ namespace AtomSampleViewer
 
         s_instance->m_scriptOperations.push(AZStd::move(operation));
     }
+
+    void ScriptManager::PollAndExecuteScripts()
+    {
+        static const char* QueueUrl = "https://sqs.us-west-2.amazonaws.com/793980555732/AtomSampleViewer.fifo";
+
+        Aws::SQS::SQSClient sqs;
+
+        Aws::SQS::Model::ReceiveMessageRequest rm_req;
+        rm_req.SetQueueUrl(QueueUrl);
+        rm_req.SetMaxNumberOfMessages(1);
+
+        auto rm_out = sqs.ReceiveMessage(rm_req);
+        if (!rm_out.IsSuccess())
+        {
+            return;
+        }
+
+        const auto& messages = rm_out.GetResult().GetMessages();
+        if (messages.size() == 0)
+        {
+            return;
+        }
+
+        const auto& message = messages[0];
+
+        // Push lua script execution into m_scriptOperations
+        auto operation = [message]() {
+            s_instance->m_scriptContext->Execute(message.GetBody().c_str());
+        };
+
+        m_scriptOperations.push(AZStd::move(operation));
+    }
+
+    void ScriptManager::OnTick([[maybe_unused]] float deltaTime, [[maybe_unused]] AZ::ScriptTimePoint scriptTime)
+    {
+        PollAndExecuteScripts();
+    }
+
 } // namespace AtomSampleViewer
