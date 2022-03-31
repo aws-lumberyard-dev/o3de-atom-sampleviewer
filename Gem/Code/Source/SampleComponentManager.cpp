@@ -84,6 +84,7 @@
 #include <ExposureExampleComponent.h>
 #include <SceneReloadSoakTestComponent.h>
 #include <LightCullingExampleComponent.h>
+#include <MeshAnalyzerComponent.h>
 #include <MeshExampleComponent.h>
 #include <MSAA_RPI_ExampleComponent.h>
 #include <MultiRenderPipelineExampleComponent.h>
@@ -282,6 +283,7 @@ namespace AtomSampleViewer
             NewRPISample<DynamicDrawExampleComponent>("DynamicDraw"),
             NewRPISample<DynamicMaterialTestComponent>("DynamicMaterialTest"),
             NewRPISample<MaterialHotReloadTestComponent>("MaterialHotReloadTest"),
+            NewRPISample<MeshAnalyzerComponent>("MeshAnalyzer"),
             NewRPISample<MeshExampleComponent>("Mesh"),
             NewRPISample<MSAA_RPI_ExampleComponent>("MSAA"),
             NewRPISample<MultiRenderPipelineExampleComponent>("MultiRenderPipeline"),

@@ -131,6 +131,8 @@ set(FILES
     Source/LightCullingExampleComponent.h
     Source/MaterialHotReloadTestComponent.cpp
     Source/MaterialHotReloadTestComponent.h
+    Source/MeshAnalyzerComponent.cpp
+    Source/MeshAnalyzerComponent.h
     Source/MeshExampleComponent.cpp
     Source/MeshExampleComponent.h
     Source/MSAA_RPI_ExampleComponent.cpp
