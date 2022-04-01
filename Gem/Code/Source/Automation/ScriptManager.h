@@ -21,6 +21,14 @@
 #include <AzCore/Debug/ProfilerBus.h>
 #include <AzCore/Component/TickBus.h>
 
+namespace Aws
+{
+    namespace SQS
+    {
+        class SQSClient;
+    }
+}
+
 namespace AZ
 {
     class ScriptContext;
@@ -350,6 +358,8 @@ namespace AtomSampleViewer
 
         bool m_prevShowImGui = true;
         bool m_showImGui = true;
+
+        Aws::SQS::SQSClient *m_sqsClient;
 
         static ScriptManager* s_instance;
     };

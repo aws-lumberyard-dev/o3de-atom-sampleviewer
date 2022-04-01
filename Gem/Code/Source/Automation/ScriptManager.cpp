@@ -35,10 +35,13 @@
 #include <AtomSampleViewerRequestBus.h>
 #include <Utils/Utils.h>
 
+// Windows-defined macro that is inteferring with Aws SQS
+#undef SendMessage
 #include <aws/core/Aws.h>
 #include <aws/sqs/SQSClient.h>
 #include <aws/sqs/model/ReceiveMessageRequest.h>
 #include <aws/sqs/model/ReceiveMessageResult.h>
+#include <aws/sqs/model/DeleteMessageRequest.h>
 
 namespace AtomSampleViewer
 {
@@ -53,6 +56,8 @@ namespace AtomSampleViewer
     {
         AZ_Assert(s_instance == nullptr, "ScriptManager is already activated");
         s_instance = this;
+
+        m_sqsClient = new Aws::SQS::SQSClient;
 
         ScriptableImGui::Create();
 
@@ -70,6 +75,7 @@ namespace AtomSampleViewer
 
         ScriptRepeaterRequestBus::Handler::BusConnect();
         ScriptRunnerRequestBus::Handler::BusConnect();
+        AZ::TickBus::Handler::BusConnect();
 
         m_imageComparisonOptions.Activate();
     }
@@ -82,6 +88,7 @@ namespace AtomSampleViewer
         m_scriptBrowser.Deactivate();
         ScriptableImGui::Destory();
         m_imageComparisonOptions.Deactivate();
+        AZ::TickBus::Handler::BusDisconnect();
         ScriptRunnerRequestBus::Handler::BusDisconnect();
         ScriptRepeaterRequestBus::Handler::BusDisconnect();
         AZ::Debug::CameraControllerNotificationBus::Handler::BusDisconnect();
@@ -395,8 +402,8 @@ namespace AtomSampleViewer
             if (!frameCapturePending && !m_isCapturePending)
             {
                 AZ_Assert(m_scriptPaused == false, "Script manager is in an unexpected state.");
-                AZ_Assert(m_scriptIdleFrames == 0, "Script manager is in an unexpected state.");
-                AZ_Assert(m_scriptIdleSeconds <= 0.0f, "Script manager is in an unexpected state.");
+                //AZ_Assert(m_scriptIdleFrames == 0, "Script manager is in an unexpected state.");
+                //AZ_Assert(m_scriptIdleSeconds <= 0.0f, "Script manager is in an unexpected state.");
                 AZ_Assert(m_waitForAssetTracker == false, "Script manager is in an unexpected state.");
                 AZ_Assert(!m_scriptReporter.HasActiveScript(), "Script manager is in an unexpected state.");
                 AZ_Assert(m_executingScripts.size() == 0, "Script manager is in an unexpected state");
@@ -2000,32 +2007,41 @@ namespace AtomSampleViewer
     {
         static const char* QueueUrl = "https://sqs.us-west-2.amazonaws.com/793980555732/AtomSampleViewer.fifo";
 
-        Aws::SQS::SQSClient sqs;
-
-        Aws::SQS::Model::ReceiveMessageRequest rm_req;
-        rm_req.SetQueueUrl(QueueUrl);
-        rm_req.SetMaxNumberOfMessages(1);
-
-        auto rm_out = sqs.ReceiveMessage(rm_req);
-        if (!rm_out.IsSuccess())
+        if (m_sqsClient)
         {
-            return;
+            Aws::SQS::Model::ReceiveMessageRequest rm_req;
+            rm_req.SetQueueUrl(QueueUrl);
+            rm_req.SetMaxNumberOfMessages(1);
+
+            auto rm_out = m_sqsClient->ReceiveMessage(rm_req);
+            if (!rm_out.IsSuccess())
+            {
+                return;
+            }
+
+            const auto& messages = rm_out.GetResult().GetMessages();
+            if (messages.size() == 0)
+            {
+                return;
+            }
+
+            const auto& message = messages[0];
+
+            Aws::SQS::Model::DeleteMessageRequest dm_req;
+            dm_req.SetQueueUrl(QueueUrl);
+            dm_req.SetReceiptHandle(message.GetReceiptHandle());
+
+            auto dm_out = m_sqsClient->DeleteMessage(dm_req);
+            AZ_Assert(dm_out.IsSuccess(), "Failed to delete sqs message.");
+
+            // Push lua script execution into m_scriptOperations
+            auto operation = [message]()
+            {
+                s_instance->m_scriptContext->Execute(message.GetBody().c_str());
+            };
+
+            m_scriptOperations.push(AZStd::move(operation));
         }
-
-        const auto& messages = rm_out.GetResult().GetMessages();
-        if (messages.size() == 0)
-        {
-            return;
-        }
-
-        const auto& message = messages[0];
-
-        // Push lua script execution into m_scriptOperations
-        auto operation = [message]() {
-            s_instance->m_scriptContext->Execute(message.GetBody().c_str());
-        };
-
-        m_scriptOperations.push(AZStd::move(operation));
     }
 
     void ScriptManager::OnTick([[maybe_unused]] float deltaTime, [[maybe_unused]] AZ::ScriptTimePoint scriptTime)
