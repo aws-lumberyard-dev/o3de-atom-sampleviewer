@@ -1,10 +1,13 @@
 _savebackup/
 .mayaSwatches/
 *.swatches
+.vs/
 .vscode/
+.idea/
 __pycache__
 AssetProcessorTemp/**
 [Bb]uild/**
-[Cc]ache/
-[Uu]ser/
+[Oo]ut/**
+[Cc]ache/**
+[Uu]ser/**
 .DS_Store

@@ -12,6 +12,10 @@
         "AtomSampleViewer"
     ],
     "icon_path": "preview.png",
+    "external_subdirectories": [
+        "Gem",
+        "Standalone"
+    ],
     "engine": "o3de",
-    "external_subdirectories": []
+    "gem_names": []
 }
