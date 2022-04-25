@@ -498,11 +498,16 @@ namespace AtomSampleViewer
                 GetMeshFeatureProcessor()->SetTransform(m_meshletsMeshHandle, translation);
             }
 
-            m_meshetsRenderObject = new AZ::Meshlets::MeshletsRenderObject(m_modelAsset);
-            if (m_meshetsRenderObject->GetMeshletsCount() && GetMeshletsFeatureProcessor())
+            if (GetMeshletsFeatureProcessor())
             {
-                m_meshletsFeatureProcessor->AddMeshletsRenderObject(m_meshetsRenderObject);
+                m_meshetsRenderObject = new AZ::Meshlets::MeshletsRenderObject(m_modelAsset, m_meshletsFeatureProcessor);
+                if (m_meshetsRenderObject->GetMeshletsCount())
+                {
+                    m_meshletsFeatureProcessor->AddMeshletsRenderObject(m_meshetsRenderObject);
+                }
             }
+            AZ_Error("Meshlets", m_meshletsFeatureProcessor && m_meshetsRenderObject->GetMeshletsCount(),
+                "Could not get MeshletsFeatureProcessor or meshlets were not generated");
         }
 
         // Adjust the arc-ball controller so that it has bounds that make sense for the current model
