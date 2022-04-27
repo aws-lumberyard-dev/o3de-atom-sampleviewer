@@ -125,6 +125,7 @@ namespace AtomSampleViewer
         // original camera configuration
         float m_originalFarClipDistance = 0.f;
         float m_originalCameraFovRadians = 0.f;
+        float m_lightOffset[3] = {0.f, 0.f, 0.f};
 
         // ImGui
         ImGuiSidebar m_imguiSidebar;

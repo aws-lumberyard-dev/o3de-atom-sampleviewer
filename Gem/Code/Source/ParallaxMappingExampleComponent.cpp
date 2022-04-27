@@ -198,10 +198,11 @@ namespace AtomSampleViewer
             m_lightRotationAngle = fmodf(m_lightRotationAngle + deltaTime, AZ::Constants::TwoPi);
         }
 
-        const auto location = AZ::Vector3(
+        auto location = AZ::Vector3(
             5 * sinf(m_lightRotationAngle),
             5 * cosf(m_lightRotationAngle),
             5);
+        location += AZ::Vector3::CreateFromFloat3(m_lightOffset);
         auto transform = AZ::Transform::CreateLookAt(
             location,
             AZ::Vector3::CreateZero());
@@ -378,6 +379,13 @@ namespace AtomSampleViewer
                 ImGui::Unindent();
             }
 
+            ImGui::Separator();
+            {
+                ImGui::Text("Light Offset");
+                ScriptableImGui::SliderFloat("X", &m_lightOffset[0], -3.f, 3.f);
+                ScriptableImGui::SliderFloat("Y", &m_lightOffset[1], -3.f, 3.f);
+                ScriptableImGui::SliderFloat("Z", &m_lightOffset[2], -3.f, 3.f);
+            }
             ImGui::Separator();
 
             {
