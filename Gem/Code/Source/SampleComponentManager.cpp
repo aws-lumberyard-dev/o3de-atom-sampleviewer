@@ -433,7 +433,7 @@ namespace AtomSampleViewer
 
             if (i < 9)
             {
-                printStr += AZStd::string::format("\tctrl+%lu", i + 1);
+                printStr += AZStd::string::format("\tctrl+%zu", i + 1);
             }
 
             printStr += "\n";
@@ -444,7 +444,7 @@ namespace AtomSampleViewer
         AzFramework::InputChannelEventListener::BusConnect();
         TickBus::Handler::BusConnect();
 
-        bool targetSampleFound = false;
+        [[maybe_unused]] bool targetSampleFound = false;
 
         const AzFramework::CommandLine* commandLine = nullptr;
         AzFramework::ApplicationRequests::Bus::BroadcastResult(commandLine, &AzFramework::ApplicationRequests::GetCommandLine);

@@ -234,7 +234,6 @@ namespace AtomSampleViewer
         using namespace AZ;
         RHI::Ptr<RHI::Device> device = Utils::GetRHIDevice();
 
-        RHI::ResultCode result = RHI::ResultCode::Success;
         m_computeBufferPool = RHI::Factory::Get().CreateBufferPool();
 
         RHI::BufferPoolDescriptor bufferPoolDesc;
@@ -242,7 +241,7 @@ namespace AtomSampleViewer
         bufferPoolDesc.m_heapMemoryLevel = RHI::HeapMemoryLevel::Device;
         bufferPoolDesc.m_hostMemoryAccess = RHI::HostMemoryAccess::Write;
 
-        result = m_computeBufferPool->Init(*device, bufferPoolDesc);
+        [[maybe_unused]] RHI::ResultCode result = m_computeBufferPool->Init(*device, bufferPoolDesc);
         AZ_Assert(result == RHI::ResultCode::Success, "Failed to initialized compute buffer pool");
 
         m_computeBuffer = RHI::Factory::Get().CreateBuffer();
