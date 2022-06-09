@@ -75,15 +75,8 @@ namespace AtomSampleViewer
 
         void DefaultWindowCreated() override;
 
-        void CreateLowEndPipeline();
-        void DestroyLowEndPipeline();
-
-        void ActivateLowEndPipeline();
-        void DeactivateLowEndPipeline();
-
         AZ::Meshlets::MeshletsFeatureProcessor* GetMeshletsFeatureProcessor();
 
-        AZ::RPI::RenderPipelinePtr m_lowEndPipeline;
         AZ::RPI::RenderPipelinePtr m_originalPipeline;
 
         AZStd::shared_ptr<AZ::RPI::WindowContext> m_windowContext;
@@ -118,9 +111,6 @@ namespace AtomSampleViewer
 
         bool m_cameraControllerDisabled = false;
 
-        bool m_useLowEndPipeline = false;
-        bool m_switchPipeline = false;
-
         AZ::Meshlets::MeshletsFeatureProcessor* m_meshletsFeatureProcessor = nullptr;
 
         AZ::Data::Instance<AZ::RPI::Material> m_materialOverrideInstance; //< Holds a copy of the material instance being used when m_enableMaterialOverride is true.
@@ -133,6 +123,7 @@ namespace AtomSampleViewer
         AZ::Meshlets::MeshletsRenderObject* m_meshetsRenderObject = nullptr;
         AZ::Data::Asset<AZ::RPI::ModelAsset> m_meshletsModelAsset;
         AZ::Render::MeshFeatureProcessorInterface::MeshHandle m_meshletsMeshHandle;
+        AZ::Render::TransformServiceFeatureProcessorInterface::ObjectId m_meshletObjectId;
 
         AZ::Data::Asset<AZ::RPI::ModelAsset> m_groundPlaneModelAsset;
         AZ::Render::MeshFeatureProcessorInterface::MeshHandle m_groundPlandMeshHandle;

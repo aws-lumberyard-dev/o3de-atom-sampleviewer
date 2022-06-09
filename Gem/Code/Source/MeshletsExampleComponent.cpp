@@ -84,40 +84,6 @@ namespace AtomSampleViewer
         AZ::Render::Bootstrap::DefaultWindowBus::BroadcastResult(m_windowContext, &AZ::Render::Bootstrap::DefaultWindowBus::Events::GetDefaultWindowContext);
     }
 
-    void MeshletsExampleComponent::CreateLowEndPipeline()
-    {
-        AZ::RPI::RenderPipelineDescriptor pipelineDesc;
-        pipelineDesc.m_mainViewTagName = "MainCamera";
-        pipelineDesc.m_name = "LowEndPipeline";
-        pipelineDesc.m_rootPassTemplate = "LowEndPipelineTemplate";
-        pipelineDesc.m_renderSettings.m_multisampleState.m_samples = 4;
-
-        m_lowEndPipeline = AZ::RPI::RenderPipeline::CreateRenderPipelineForWindow(pipelineDesc, *m_windowContext);
-    }
-
-    void MeshletsExampleComponent::DestroyLowEndPipeline()
-    {
-        m_lowEndPipeline = nullptr;
-    }
-
-    void MeshletsExampleComponent::ActivateLowEndPipeline()
-    {
-        m_originalPipeline = m_scene->GetDefaultRenderPipeline();
-        m_scene->AddRenderPipeline(m_lowEndPipeline);
-        m_lowEndPipeline->SetDefaultView(m_originalPipeline->GetDefaultView());
-        m_scene->RemoveRenderPipeline(m_originalPipeline->GetId());
-
-        m_imguiScope = AZ::Render::ImGuiActiveContextScope::FromPass({ m_lowEndPipeline->GetId().GetCStr(), "ImGuiPass" });
-    }
-
-    void MeshletsExampleComponent::DeactivateLowEndPipeline()
-    {
-        m_imguiScope = {}; // restores previous ImGui context.
-
-        m_scene->AddRenderPipeline(m_originalPipeline);
-        m_scene->RemoveRenderPipeline(m_lowEndPipeline->GetId());
-    }
-
     void MeshletsExampleComponent::Activate()
     {
         UseArcBallCameraController();
@@ -156,16 +122,10 @@ namespace AtomSampleViewer
 
         AZ::TickBus::Handler::BusConnect();
         AZ::Render::Bootstrap::DefaultWindowNotificationBus::Handler::BusConnect();
-        CreateLowEndPipeline();
     }
 
     void MeshletsExampleComponent::Deactivate()
     {
-        if (m_useLowEndPipeline)
-        {
-            DeactivateLowEndPipeline();
-        }
-        DestroyLowEndPipeline();
         AZ::Render::Bootstrap::DefaultWindowNotificationBus::Handler::BusDisconnect();
         AZ::TickBus::Handler::BusDisconnect();
 
@@ -188,9 +148,9 @@ namespace AtomSampleViewer
             if (GetMeshletsFeatureProcessor())
             {
                 m_meshletsFeatureProcessor->RemoveMeshletsRenderObject(m_meshetsRenderObject);
+                // No deletion - this will be done by the feature processor
+                m_meshetsRenderObject = nullptr;
             }
-            delete m_meshetsRenderObject;
-            m_meshetsRenderObject = nullptr;
         }
 
         m_modelAsset = {};
@@ -215,28 +175,11 @@ namespace AtomSampleViewer
     {
         bool modelNeedsUpdate = false;
 
-        // Switch pipeline before any imGui actions (switching pipelines switches imGui scope)
-        if (m_switchPipeline)
-        {
-            if (m_useLowEndPipeline)
-            {
-                ActivateLowEndPipeline();
-            }
-            else
-            {
-                DeactivateLowEndPipeline();
-            }
-
-            m_switchPipeline = false;
-        }
-
         if (m_imguiSidebar.Begin())
         {
             ImGuiLightingPreset();
 
             ImGuiAssetBrowser::WidgetSettings assetBrowserSettings;
-
-            m_switchPipeline = ScriptableImGui::Checkbox("Use Low End Pipeline", &m_useLowEndPipeline) || m_switchPipeline;
 
             modelNeedsUpdate |= ScriptableImGui::Checkbox("Enable Material Override", &m_enableMaterialOverride);
            
@@ -275,39 +218,7 @@ namespace AtomSampleViewer
                 // Reset LOD override when the model changes.
                 m_lodConfig.m_lodType = AZ::RPI::Cullable::LodType::Default;
             }
-            /*
-            AZ::Data::Instance<AZ::RPI::Model> model = GetMeshFeatureProcessor()->GetModel(m_meshHandle);
-            if (model)
-            {
-                const char* NoLodOverrideText = "No LOD Override";
-                const char* LodFormatString = "LOD %i";
 
-                AZStd::string previewText = m_lodConfig.m_lodType == AZ::RPI::Cullable::LodType::Default ? 
-                    NoLodOverrideText : 
-                    AZStd::string::format(LodFormatString, m_lodConfig.m_lodOverride);
-
-                if (ScriptableImGui::BeginCombo("", previewText.c_str()))
-                {
-                    if (ScriptableImGui::Selectable(NoLodOverrideText, m_lodConfig.m_lodType == AZ::RPI::Cullable::LodType::Default))
-                    {
-                        m_lodConfig.m_lodType = AZ::RPI::Cullable::LodType::Default;
-                        GetMeshFeatureProcessor()->SetMeshLodConfiguration(m_meshHandle, m_lodConfig);
-                    }
-
-                    for (uint32_t i = 0; i < model->GetLodCount(); ++i)
-                    {
-                        AZStd::string name = AZStd::string::format(LodFormatString, i);
-                        if (ScriptableImGui::Selectable(name.c_str(), m_lodConfig.m_lodOverride == i))
-                        {
-                            m_lodConfig.m_lodType = AZ::RPI::Cullable::LodType::SpecificLod;
-                            m_lodConfig.m_lodOverride = static_cast<AZ::RPI::Cullable::LodOverride>(i);
-                            GetMeshFeatureProcessor()->SetMeshLodConfiguration(m_meshHandle, m_lodConfig);
-                        }
-                    }
-                    ScriptableImGui::EndCombo();
-                }
-            }
-            */
             ImGui::Spacing();
             ImGui::Separator();
             ImGui::Spacing();
@@ -355,7 +266,10 @@ namespace AtomSampleViewer
             if (GetMeshletsFeatureProcessor())
             {
                 m_meshletsFeatureProcessor->RemoveMeshletsRenderObject(m_meshetsRenderObject);
+                // No deletion - this will be done by the feature processor
+                m_meshetsRenderObject = nullptr;
             }
+
             return;
         }
 
@@ -395,12 +309,16 @@ namespace AtomSampleViewer
 
             if (m_meshetsModel)
             {   // delete the meshlet model so it will be recreated on the next tick
+                if (GetMeshletsFeatureProcessor())
+                {
+                    m_meshletsFeatureProcessor->RemoveMeshletsRenderObject(m_meshetsRenderObject);
+                    // No deletion - this will be done by the feature processor
+                    m_meshetsRenderObject = nullptr;
+                }
+
                 GetMeshFeatureProcessor()->ReleaseMesh(m_meshletsMeshHandle);
                 delete m_meshetsModel;
                 m_meshetsModel = nullptr;
-
-                delete m_meshetsRenderObject;
-                m_meshetsRenderObject = nullptr;
             }
 
             m_meshHandle = GetMeshFeatureProcessor()->AcquireMesh(AZ::Render::MeshHandleDescriptor{ m_modelAsset }, m_materialOverrideInstance);
@@ -450,7 +368,6 @@ namespace AtomSampleViewer
 
     void MeshletsExampleComponent::OnEntityDestruction(const AZ::EntityId& entityId)
     {
-        OnLightingPresetEntityShutdown(entityId);
         AZ::EntityBus::MultiHandler::BusDisconnect(entityId);
     }
 
@@ -484,7 +401,7 @@ namespace AtomSampleViewer
             m_meshetsModel = new AZ::Meshlets::MeshletsModel(m_modelAsset);
             if (m_meshetsModel->GetMeshletsModel())
             {
-                static constexpr const char meshletDebugMaterialPath[] = "objects/adi/debugshadermaterial_01.azmaterial";
+                static constexpr const char meshletDebugMaterialPath[] = "materials/debugshadermaterial_01.azmaterial";
 
                 AZ::Data::Asset<AZ::RPI::MaterialAsset> meshletDebugMaterialAsset =
                     AZ::RPI::AssetUtils::LoadAssetByProductPath<AZ::RPI::MaterialAsset>(meshletDebugMaterialPath, AZ::RPI::AssetUtils::TraceLevel::Error);
@@ -494,7 +411,7 @@ namespace AtomSampleViewer
                 m_meshletsModelAsset = m_meshetsModel->GetMeshletsModel()->GetModelAsset();
                 m_meshletsMeshHandle = GetMeshFeatureProcessor()->AcquireMesh(AZ::Render::MeshHandleDescriptor{ m_meshletsModelAsset }, m_meshletsDebugMaterial);// m_materialOverrideInstance);
 
-                AZ::Transform translation = AZ::Transform::CreateTranslation(AZ::Vector3(0, 2.0, 0));
+                AZ::Transform translation = AZ::Transform::CreateTranslation(AZ::Vector3(0.75, 1.5, 0));
                 GetMeshFeatureProcessor()->SetTransform(m_meshletsMeshHandle, translation);
             }
 
@@ -503,7 +420,10 @@ namespace AtomSampleViewer
                 m_meshetsRenderObject = new AZ::Meshlets::MeshletsRenderObject(m_modelAsset, m_meshletsFeatureProcessor);
                 if (m_meshetsRenderObject->GetMeshletsCount())
                 {
-                    m_meshletsFeatureProcessor->AddMeshletsRenderObject(m_meshetsRenderObject);
+                    m_meshletObjectId = m_meshletsFeatureProcessor->AddMeshletsRenderObject(m_meshetsRenderObject);
+
+                    AZ::Transform translation = AZ::Transform::CreateTranslation(AZ::Vector3(-0.75, 1.5, 0));
+                    m_meshletsFeatureProcessor->SetTransform(m_meshletObjectId, translation);
                 }
             }
             AZ_Error("Meshlets", m_meshletsFeatureProcessor && m_meshetsRenderObject->GetMeshletsCount(),
