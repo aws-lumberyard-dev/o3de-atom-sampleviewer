@@ -77,8 +77,6 @@ namespace AtomSampleViewer
 
         AZ::Meshlets::MeshletsFeatureProcessor* GetMeshletsFeatureProcessor();
 
-        AZ::RPI::RenderPipelinePtr m_originalPipeline;
-
         AZStd::shared_ptr<AZ::RPI::WindowContext> m_windowContext;
         AZ::Render::ImGuiActiveContextScope m_imguiScope;
 

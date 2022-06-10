@@ -94,10 +94,12 @@ namespace AtomSampleViewer
             {
                 return false;
             }
+
             if (m_showModelMaterials)
             {
                 return true;
             }
+
             // Return true only if the azmaterial was generated from a ".material" file.
             // Materials with subid == 0, are 99.99% guaranteed to be generated from a ".material" file.
             // Without this assurance We would need to call  AzToolsFramework::AssetSystem::AssetSystemRequest::GetSourceInfoBySourceUUID()
