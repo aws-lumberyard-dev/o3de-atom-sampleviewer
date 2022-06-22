@@ -35,7 +35,7 @@ namespace AtomSampleViewer
 
     void XRExampleComponent::Activate()
     {
-        m_depthStencilID = AZ::RHI::AttachmentId{ AZStd::string::format("DepthStencilID_ % u", GetId()) };
+        m_depthStencilID = AZ::RHI::AttachmentId{ AZStd::string::format("DepthStencilID_% u", GetId()) };
         CreateCubeInputAssemblyBuffer();
         CreateCubePipeline();
         CreateScope();
@@ -373,7 +373,7 @@ namespace AtomSampleViewer
             decltype(prepareFunction),
             decltype(compileFunction),
             decltype(executeFunction)>(
-                AZ::RHI::ScopeId{ AZStd::string::format("XRSample_Id_ % u", GetId()) },
+                AZ::RHI::ScopeId{ AZStd::string::format("XRSample_Id_% u", GetId()) },
                 ScopeData{},
                 prepareFunction,
                 compileFunction,
