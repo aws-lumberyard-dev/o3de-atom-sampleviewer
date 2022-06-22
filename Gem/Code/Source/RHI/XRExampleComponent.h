@@ -34,7 +34,7 @@ namespace AtomSampleViewer
         , public AZ::TickBus::Handler
     {
     public:
-        AZ_COMPONENT(XRExampleComponent, "{A7D9A921-1FF9-4078-92BD-169E258456E7}", AZ::Component);
+        AZ_COMPONENT(XRExampleComponent, "{A7D9A921-1FF9-4078-92BD-169E258456E7}");
         AZ_DISABLE_COPY(XRExampleComponent);
 
         static void Reflect(AZ::ReflectContext* context);
@@ -44,16 +44,15 @@ namespace AtomSampleViewer
 
     protected:
         // 1 cube for view + 2 cubes for the controller
-        static const uint32_t s_numberOfCubes = 3; 
- 
-        static const uint32_t s_geometryVertexCount = 24;
-        static const uint32_t s_geometryIndexCount = 36;
+        static const uint32_t NumberOfCubes = 3; 
+        static const uint32_t GeometryVertexCount = 24;
+        static const uint32_t GeometryIndexCount = 36;
 
         struct SingleCubeBufferData
         {
-            AZStd::array<VertexPosition, s_geometryVertexCount> m_positions;
-            AZStd::array<VertexColor, s_geometryVertexCount> m_colors;
-            AZStd::array<uint16_t, s_geometryIndexCount> m_indices;
+            AZStd::array<VertexPosition, GeometryVertexCount> m_positions;
+            AZStd::array<VertexColor, GeometryVertexCount> m_colors;
+            AZStd::array<uint16_t, GeometryIndexCount> m_indices;
         };
 
         // AZ::Component
@@ -69,7 +68,7 @@ namespace AtomSampleViewer
         //! Create IA data
         void CreateCubeInputAssemblyBuffer();
         //! Create Cube data
-        SingleCubeBufferData CreateSingleCubeBufferData(const AZ::Vector4 color);
+        SingleCubeBufferData CreateSingleCubeBufferData();
         //! Create PSO data
         void CreateCubePipeline();
         //! Create the relevant Scope
@@ -91,11 +90,12 @@ namespace AtomSampleViewer
         AZStd::array<AZ::RHI::StreamBufferView, 2> m_streamBufferViews;
         AZ::RHI::DrawItem m_drawItem;
         float m_time = 0.0f;
-        AZStd::array<AZ::Data::Instance<AZ::RPI::ShaderResourceGroup>, s_numberOfCubes> m_shaderResourceGroups;
-        AZStd::array<AZ::Matrix4x4, s_numberOfCubes> m_modelMatrices;
+        AZStd::array<AZ::Data::Instance<AZ::RPI::ShaderResourceGroup>, NumberOfCubes> m_shaderResourceGroups;
+        AZStd::array<AZ::Matrix4x4, NumberOfCubes> m_modelMatrices;
         AZ::Matrix4x4 m_viewProjMatrix;
 
         AZ::RHI::ShaderInputConstantIndex m_shaderIndexWorldMat;
         AZ::RHI::ShaderInputConstantIndex m_shaderIndexViewProj;  
+        AZ::RHI::AttachmentId m_depthStencilID;
     };
 } // namespace AtomSampleViewer

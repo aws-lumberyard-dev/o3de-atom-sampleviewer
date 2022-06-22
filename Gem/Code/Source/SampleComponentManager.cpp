@@ -1496,17 +1496,14 @@ namespace AtomSampleViewer
             SwitchSceneForRPISample();
         }
 
-        SampleComponentConfig config(m_windowContext, m_cameraEntity->GetId(), m_entityContextId);
-
-        for (AZ::RPI::Ptr<RHISamplePass> samplePass : m_rhiSamplePasses)
+        SampleComponentConfig config(m_windowContext, m_cameraEntity->GetId(), m_entityContextId); 
+        // special setup for RHI samples
+        if (sampleEntry.m_pipelineType == SamplePipelineType::RHI)
         {
-            AZ::Component* newComponent = m_exampleEntity->CreateComponent(sampleEntry.m_sampleUuid);
-            newComponent->SetConfiguration(config);
-            
-            // special setup for RHI samples
-            if (sampleEntry.m_pipelineType == SamplePipelineType::RHI)
+            for (AZ::RPI::Ptr<RHISamplePass> samplePass : m_rhiSamplePasses)
             {
-                BasicRHIComponent* rhiSampleComponent = static_cast<BasicRHIComponent*>(newComponent);
+                BasicRHIComponent* rhiSampleComponent = static_cast<BasicRHIComponent*>(m_exampleEntity->CreateComponent(sampleEntry.m_sampleUuid));
+                rhiSampleComponent->SetConfiguration(config);
                 rhiSampleComponent->SetViewIndex(samplePass->GetViewIndex());
                 if (rhiSampleComponent->IsSupportedRHISamplePipeline())
                 {
@@ -1516,9 +1513,16 @@ namespace AtomSampleViewer
                 {
                     samplePass->SetRHISample(nullptr);
                 }
-            }
+                m_activeSamples.push_back(rhiSampleComponent);
+            }   
+        }
+        else
+        {
+            AZ::Component* newComponent = m_exampleEntity->CreateComponent(sampleEntry.m_sampleUuid);
+            newComponent->SetConfiguration(config);
             m_activeSamples.push_back(newComponent);
         }
+        
         m_exampleEntity->Activate();
 
         // Even though this is done in CameraReset(), the example component wasn't activated at the time so we have to send this event again.
@@ -1599,7 +1603,7 @@ namespace AtomSampleViewer
             DisableXrPipelines();
         }
 
-        // REgister the RHi scene
+        // Register the RHi scene
         RPI::RPISystemInterface::Get()->RegisterScene(m_rhiScene);  
         // Setup imGui since a new render pipeline with imgui pass was created
         SetupImGuiContext();

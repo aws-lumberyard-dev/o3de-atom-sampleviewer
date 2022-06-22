@@ -23,6 +23,6 @@ set(ENABLED_GEMS
     MaterialEditor
     UiBasics
     StreamerProfiler
-    XR #added via call to enable-gem
-    OpenXRVk #added via call to enable-gem
+    XR
+    OpenXRVk
 )

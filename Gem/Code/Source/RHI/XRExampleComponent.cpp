@@ -7,27 +7,18 @@
  */
 
 #include <RHI/XRExampleComponent.h>
-#include <Utils/Utils.h>
-
-#include <SampleComponentManager.h>
-
 #include <Atom/RHI/CommandList.h>
 #include <Atom/RHI.Reflect/InputStreamLayoutBuilder.h>
 #include <Atom/RHI.Reflect/RenderAttachmentLayoutBuilder.h>
 #include <Atom/RPI.Public/Shader/Shader.h>
 #include <Atom/RPI.Reflect/Shader/ShaderAsset.h>
+#include <AzCore/Math/Color.h>
 #include <AzCore/Serialization/SerializeContext.h>
+#include <SampleComponentManager.h>
+#include <Utils/Utils.h>
 
 namespace AtomSampleViewer
 {
-    //Colors for different faces of the cube
-    const AZ::Vector4 Red = AZ::Vector4(1, 0, 0, 0);
-    const AZ::Vector4 DarkRed = AZ::Vector4(0.25f, 0, 0, 0);
-    const AZ::Vector4 Green = AZ::Vector4(0, 1, 0, 0);
-    const AZ::Vector4 DarkGreen = AZ::Vector4(0, 0.25f, 0, 0);
-    const AZ::Vector4 Blue = AZ::Vector4(0, 0, 1, 0);
-    const AZ::Vector4 DarkBlue = AZ::Vector4(0, 0, 0.25f, 0);
-
     void XRExampleComponent::Reflect(AZ::ReflectContext* context)
     {
         if (auto* serializeContext = azrtti_cast<AZ::SerializeContext*>(context))
@@ -39,12 +30,12 @@ namespace AtomSampleViewer
     XRExampleComponent::XRExampleComponent()
     {
         m_supportRHISamplePipeline = true;
+        
     }
 
     void XRExampleComponent::Activate()
     {
-        using namespace AZ;
-
+        m_depthStencilID = AZ::RHI::AttachmentId{ AZStd::string::format("DepthStencilID_ % u", GetId()) };
         CreateCubeInputAssemblyBuffer();
         CreateCubePipeline();
         CreateScope();
@@ -65,8 +56,8 @@ namespace AtomSampleViewer
         AZ::RPI::XRRenderingInterface* xrSystem = AZ::RPI::RPISystemInterface::Get()->GetXRSystem();
         if (xrSystem && xrSystem->ShouldRender())
         {
-            AZ::RPI::FovData fovData = xrSystem->GetViewFov(m_viewIndex);
-            AZ::RPI::PoseData poseData = xrSystem->GetViewPose(m_viewIndex);
+            const AZ::RPI::FovData fovData = xrSystem->GetViewFov(m_viewIndex);
+            const AZ::RPI::PoseData poseData = xrSystem->GetViewPose(m_viewIndex);
                 
             static const float clip_near = 0.05f;
             static const float clip_far = 100.0f;
@@ -74,11 +65,12 @@ namespace AtomSampleViewer
                                                           fovData.m_angleDown, fovData.m_angleUp, 
                                                           clip_near, clip_far);
 
-            AZ::Matrix4x4 viewMat = AZ::Matrix4x4::CreateFromQuaternionAndTranslation(poseData.orientation, poseData.position);;
-            viewMat.InvertTransform();
+            AZ::Quaternion poseOrientation = poseData.orientation; 
+            poseOrientation.InvertFast(); 
+            AZ::Matrix4x4 viewMat = AZ::Matrix4x4::CreateFromQuaternionAndTranslation(poseOrientation, -poseData.position);
             m_viewProjMatrix = projection * viewMat;
  
-            AZ::Matrix4x4 initialScaleMat = AZ::Matrix4x4::CreateScale(AZ::Vector3(0.1f, 0.1f, 0.1f));
+            const AZ::Matrix4x4 initialScaleMat = AZ::Matrix4x4::CreateScale(AZ::Vector3(0.1f, 0.1f, 0.1f));
 
             //Model matrix for the cube related to the front view
             AZ::RPI::PoseData frontViewPoseData = xrSystem->GetViewFrontPose();
@@ -86,16 +78,16 @@ namespace AtomSampleViewer
                       
             //Model matrix for the cube related to the left controller
             AZ::RPI::PoseData controllerLeftPose = xrSystem->GetControllerPose(0);
-            AZ::Matrix4x4 leftScaleMat = initialScaleMat * AZ::Matrix4x4::CreateScale(AZ::Vector3(xrSystem->GetControllerScale(0), xrSystem->GetControllerScale(0), xrSystem->GetControllerScale(0)));
+            AZ::Matrix4x4 leftScaleMat = initialScaleMat * AZ::Matrix4x4::CreateScale(AZ::Vector3(xrSystem->GetControllerScale(0)));
             m_modelMatrices[1] = AZ::Matrix4x4::CreateFromQuaternionAndTranslation(controllerLeftPose.orientation, controllerLeftPose.position) * leftScaleMat;
 
             //Model matrix for the cube related to the right controller
-            AZ::Matrix4x4 rightScaleMat = initialScaleMat * AZ::Matrix4x4::CreateScale(AZ::Vector3(xrSystem->GetControllerScale(1), xrSystem->GetControllerScale(1), xrSystem->GetControllerScale(1)));
+            AZ::Matrix4x4 rightScaleMat = initialScaleMat * AZ::Matrix4x4::CreateScale(AZ::Vector3(xrSystem->GetControllerScale(1)));
             AZ::RPI::PoseData controllerRightPose = xrSystem->GetControllerPose(1);
             m_modelMatrices[2] = AZ::Matrix4x4::CreateFromQuaternionAndTranslation(controllerRightPose.orientation, controllerRightPose.position) * rightScaleMat;
         }      
         
-        for (int i = 0; i < s_numberOfCubes; ++i)
+        for (int i = 0; i < NumberOfCubes; ++i)
         {
             m_shaderResourceGroups[i]->SetConstant(m_shaderIndexWorldMat, m_modelMatrices[i]);
             m_shaderResourceGroups[i]->SetConstant(m_shaderIndexViewProj, m_viewProjMatrix);
@@ -105,29 +97,29 @@ namespace AtomSampleViewer
         BasicRHIComponent::OnFramePrepare(frameGraphBuilder);
     }
 
-    XRExampleComponent::SingleCubeBufferData XRExampleComponent::CreateSingleCubeBufferData([[maybe_unused]] const AZ::Vector4 color)
+    XRExampleComponent::SingleCubeBufferData XRExampleComponent::CreateSingleCubeBufferData()
     {
-        AZStd::vector<AZ::Vector4> vertexColor =
+        const AZStd::fixed_vector<AZ::Color, GeometryVertexCount> vertexColor =
         {
             //Front Face
-            DarkBlue, DarkBlue, DarkBlue, DarkBlue,
+            AZ::Colors::DarkBlue,   AZ::Colors::DarkBlue,   AZ::Colors::DarkBlue,   AZ::Colors::DarkBlue,
             //Back Face                                                                       
-            Blue, Blue, Blue, Blue,
+            AZ::Colors::Blue,       AZ::Colors::Blue,       AZ::Colors::Blue,       AZ::Colors::Blue,
             //Left Face                                                                      
-            DarkGreen, DarkGreen, DarkGreen, DarkGreen,
+            AZ::Colors::DarkGreen,  AZ::Colors::DarkGreen,  AZ::Colors::DarkGreen,  AZ::Colors::DarkGreen,
             //Right Face                                                                    
-            Green, Green, Green, Green,
+            AZ::Colors::Green,      AZ::Colors::Green,      AZ::Colors::Green,      AZ::Colors::Green,
             //Top Face                                                                  
-            DarkRed, DarkRed, DarkRed, DarkRed,
+            AZ::Colors::DarkRed,    AZ::Colors::DarkRed,    AZ::Colors::DarkRed,    AZ::Colors::DarkRed,
             //Bottom Face                                                                    
-            Red, Red, Red, Red,
+            AZ::Colors::Red,        AZ::Colors::Red,        AZ::Colors::Red,        AZ::Colors::Red,
         };
 
         // Create vertices, colors and normals for a cube and a plane
         SingleCubeBufferData bufferData;
         {
             
-            AZStd::vector<AZ::Vector3> vertices =
+            const AZStd::fixed_vector<AZ::Vector3, GeometryVertexCount> vertices =
             {
                 //Front Face
                 AZ::Vector3(1.0, 1.0, 1.0),         AZ::Vector3(-1.0, 1.0, 1.0),     AZ::Vector3(-1.0, -1.0, 1.0),    AZ::Vector3(1.0, -1.0, 1.0),
@@ -143,10 +135,10 @@ namespace AtomSampleViewer
                 AZ::Vector3(1.0, -1.0, 1.0),        AZ::Vector3(-1.0, -1.0, 1.0),    AZ::Vector3(-1.0, -1.0, -1.0),   AZ::Vector3(1.0, -1.0, -1.0),
             };
 
-            for (int i = 0; i < s_geometryVertexCount; ++i)
+            for (int i = 0; i < GeometryVertexCount; ++i)
             {
                 SetVertexPosition(bufferData.m_positions.data(), i, vertices[i]);
-                SetVertexColor(bufferData.m_colors.data(), i, vertexColor[i]);
+                SetVertexColor(bufferData.m_colors.data(), i, vertexColor[i].GetAsVector4());
             }
 
             bufferData.m_indices =
@@ -192,7 +184,7 @@ namespace AtomSampleViewer
             return;
         }
 
-        SingleCubeBufferData bufferData = CreateSingleCubeBufferData(AZ::Vector4(1.0f, 0.0f, 0.0f, 0.0f));
+        SingleCubeBufferData bufferData = CreateSingleCubeBufferData();
 
         m_inputAssemblyBuffer = AZ::RHI::Factory::Get().CreateBuffer();
         AZ::RHI::BufferInitRequest request;
@@ -256,10 +248,13 @@ namespace AtomSampleViewer
         AZ::RHI::PipelineStateDescriptorForDraw pipelineDesc;
         shader->GetVariant(AZ::RPI::ShaderAsset::RootShaderVariantStableId).ConfigurePipelineState(pipelineDesc);
         pipelineDesc.m_inputStreamLayout = m_streamLayoutDescriptor;
-        
+        pipelineDesc.m_renderStates.m_depthStencilState.m_depth.m_enable = 1;
+        pipelineDesc.m_renderStates.m_depthStencilState.m_depth.m_func = AZ::RHI::ComparisonFunc::LessEqual;
+
         AZ::RHI::RenderAttachmentLayoutBuilder attachmentsBuilder;
         attachmentsBuilder.AddSubpass()
-            ->RenderTargetAttachment(m_outputFormat);
+            ->RenderTargetAttachment(m_outputFormat)
+            ->DepthStencilAttachment(device->GetNearestSupportedFormat(AZ::RHI::Format::D24_UNORM_S8_UINT, AZ::RHI::FormatCapabilities::DepthStencil));
             
         [[maybe_unused]] AZ::RHI::ResultCode result = attachmentsBuilder.End(pipelineDesc.m_renderAttachmentConfiguration.m_renderAttachmentLayout);
         AZ_Assert(result == AZ::RHI::ResultCode::Success, "Failed to create render attachment layout");
@@ -278,13 +273,14 @@ namespace AtomSampleViewer
             return;
         }
 
-        for (int i = 0; i < s_numberOfCubes; ++i)
+        for (int i = 0; i < NumberOfCubes; ++i)
         {
             m_shaderResourceGroups[i] = CreateShaderResourceGroup(shader, "OpenXrSrg", sampleName);
-
-            FindShaderInputIndex(&m_shaderIndexWorldMat, m_shaderResourceGroups[i], AZ::Name{ "m_worldMatrix" }, "XRExampleComponent");
-            FindShaderInputIndex(&m_shaderIndexViewProj, m_shaderResourceGroups[i], AZ::Name{ "m_viewProjMatrix" }, "XRExampleComponent");
         }
+
+        // Using the first SRG to get the correct index as all the SRGs will have the same indices.
+        FindShaderInputIndex(&m_shaderIndexWorldMat, m_shaderResourceGroups[0], AZ::Name{ "m_worldMatrix" }, "XRExampleComponent");
+        FindShaderInputIndex(&m_shaderIndexViewProj, m_shaderResourceGroups[0], AZ::Name{ "m_viewProjMatrix" }, "XRExampleComponent");
     }
 
     void XRExampleComponent::CreateScope()
@@ -304,8 +300,29 @@ namespace AtomSampleViewer
                 frameGraph.UseColorAttachment(descriptor);
             }
 
-            // We will submit s_numberOfCubes draw items.
-            frameGraph.SetEstimatedItemCount(s_numberOfCubes);
+            // Create & Binds DepthStencil image
+            {
+                const AZ::RHI::Ptr<AZ::RHI::Device> device = Utils::GetRHIDevice();
+                const AZ::RHI::ImageDescriptor imageDescriptor = AZ::RHI::ImageDescriptor::Create2D(
+                    AZ::RHI::ImageBindFlags::DepthStencil,
+                    m_outputWidth,
+                    m_outputHeight,
+                    device->GetNearestSupportedFormat(AZ::RHI::Format::D24_UNORM_S8_UINT, AZ::RHI::FormatCapabilities::DepthStencil));
+                const AZ::RHI::TransientImageDescriptor transientImageDescriptor(m_depthStencilID, imageDescriptor);
+
+                frameGraph.GetAttachmentDatabase().CreateTransientImage(transientImageDescriptor);
+
+                AZ::RHI::ImageScopeAttachmentDescriptor dsDesc;
+                dsDesc.m_attachmentId = m_depthStencilID;
+                dsDesc.m_imageViewDescriptor.m_overrideFormat = device->GetNearestSupportedFormat(AZ::RHI::Format::D24_UNORM_S8_UINT, AZ::RHI::FormatCapabilities::DepthStencil);
+                dsDesc.m_loadStoreAction.m_clearValue = AZ::RHI::ClearValue::CreateDepthStencil(1.0f, 0);
+                dsDesc.m_loadStoreAction.m_loadAction = AZ::RHI::AttachmentLoadAction::Clear;
+                dsDesc.m_loadStoreAction.m_loadActionStencil = AZ::RHI::AttachmentLoadAction::DontCare;
+                frameGraph.UseDepthStencilAttachment(dsDesc, AZ::RHI::ScopeAttachmentAccess::Write);
+            }
+
+            // We will submit NumberOfCubes draw items.
+            frameGraph.SetEstimatedItemCount(NumberOfCubes);
         };
 
         AZ::RHI::EmptyCompileFunction<ScopeData> compileFunction;
@@ -319,18 +336,18 @@ namespace AtomSampleViewer
             commandList->SetScissors(&m_scissor, 1);
 
             AZ::RHI::DrawIndexed drawIndexed;
-            drawIndexed.m_indexCount = s_geometryIndexCount;
+            drawIndexed.m_indexCount = GeometryIndexCount;
             drawIndexed.m_instanceCount = 1;
 
-            // Dividing s_numberOfCubes by context.GetCommandListCount() to balance to number 
+            // Dividing NumberOfCubes by context.GetCommandListCount() to balance to number 
             // of draw call equally between each thread.
-            uint32_t numberOfCubesPerCommandList = s_numberOfCubes / context.GetCommandListCount();
+            uint32_t numberOfCubesPerCommandList = NumberOfCubes / context.GetCommandListCount();
             uint32_t indexStart = context.GetCommandListIndex() * numberOfCubesPerCommandList;
             uint32_t indexEnd = indexStart + numberOfCubesPerCommandList;
 
             if (context.GetCommandListIndex() == context.GetCommandListCount() - 1)
             {
-                indexEnd = s_numberOfCubes;
+                indexEnd = NumberOfCubes;
             }
 
             for (uint32_t i = indexStart; i < indexEnd; ++i)

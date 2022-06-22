@@ -192,7 +192,7 @@ namespace AtomSampleViewer
         // Entity to hold only example component. It doesn't need an entity context.
         AZ::Entity* m_exampleEntity = nullptr;
 
-        AZStd::vector<AZ::Component*> m_activeSamples;;
+        AZStd::vector<AZ::Component*> m_activeSamples;
 
         AZ::Entity* m_cameraEntity = nullptr;
 
