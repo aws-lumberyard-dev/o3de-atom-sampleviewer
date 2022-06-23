@@ -23,4 +23,6 @@ set(ENABLED_GEMS
     MaterialEditor
     UiBasics
     StreamerProfiler
+    XR
+    OpenXRVk
 )
