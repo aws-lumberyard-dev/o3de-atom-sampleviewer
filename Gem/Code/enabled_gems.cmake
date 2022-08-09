@@ -23,6 +23,7 @@ set(ENABLED_GEMS
     MaterialEditor
     UiBasics
     StreamerProfiler
+    DiffuseProbeGrid
     XR
     OpenXRVk
 )
