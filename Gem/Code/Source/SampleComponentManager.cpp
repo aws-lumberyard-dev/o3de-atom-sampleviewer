@@ -863,11 +863,6 @@ namespace AtomSampleViewer
             ShowTransientAttachmentProfilerWindow();
         }
 
-        if (m_showShaderMetrics)
-        {
-            ShowShaderMetricsWindow();
-        }
-
         m_scriptManager->TickImGui();
 
         m_contentWarningDialog.TickPopup();
@@ -927,11 +922,6 @@ namespace AtomSampleViewer
                 if (ImGui::MenuItem("Frame Graph Visualizer"))
                 {
                     m_showFrameGraphVisualizer = !m_showFrameGraphVisualizer;
-                }
-
-                if (ImGui::MenuItem("Shader Metrics"))
-                {
-                    m_showShaderMetrics = !m_showShaderMetrics;
                 }
 
                 ImGui::EndMenu();
@@ -1171,11 +1161,6 @@ namespace AtomSampleViewer
         {
             m_showTransientAttachmentProfiler = m_imguiTransientAttachmentProfiler.Draw(*transientStats);
         }
-    }
-
-    void SampleComponentManager::ShowShaderMetricsWindow()
-    {
-        m_imguiShaderMetrics.Draw(m_showShaderMetrics, AZ::RPI::ShaderMetricsSystemInterface::Get()->GetMetrics());
     }
 
     void SampleComponentManager::ShowResizeViewportDialog()
