@@ -104,6 +104,7 @@
 #include <TransparencyExampleComponent.h>
 #include <DiffuseGIExampleComponent.h>
 #include <SSRExampleComponent.h>
+#include <XRRPIExampleComponent.h>
 #include <ShaderReloadTestComponent.h>
 #include <ReadbackExampleComponent.h>
 
@@ -314,6 +315,7 @@ namespace AtomSampleViewer
             NewFeaturesSample<SkinnedMeshExampleComponent>("SkinnedMesh"),
             NewFeaturesSample<SsaoExampleComponent>("SSAO"),
             NewFeaturesSample<SSRExampleComponent>("SSR"),
+            NewFeaturesSample<XRRPIExampleComponent>("OpenXR"),
             NewFeaturesSample<TonemappingExampleComponent>("Tonemapping"),
             NewFeaturesSample<TransparencyExampleComponent>("Transparency"),
             NewPerfSample<_100KDrawableExampleComponent>("100KDrawable_SingleView"),
@@ -1677,6 +1679,34 @@ namespace AtomSampleViewer
 
         renderPipeline->SetDefaultViewFromEntity(m_cameraEntity->GetId());
 
+        AZ::RPI::RPISystemInterface* rpiSystem = AZ::RPI::RPISystemInterface::Get();
+        if (rpiSystem->GetXRSystem())
+        {
+            // Build the pipeline for left eye
+            pipelineDesc.m_name = "RPISamplePipelineXRLeft";
+            pipelineDesc.m_rootPassTemplate = "LowEndPipelineXRLeftTemplate";
+            RPI::RenderPipelinePtr renderPipelineLeft = RPI::RenderPipeline::CreateRenderPipelineForWindow(pipelineDesc, *m_windowContext.get(), AZ::RPI::WindowContext::SwapChainMode::XrLeft);
+            
+            // Build the pipeline for right eye
+            pipelineDesc.m_name = "RHISamplePipelineXRRight";
+            pipelineDesc.m_rootPassTemplate = "LowEndPipelineXRRightTemplate";
+            RPI::RenderPipelinePtr renderPipelineRight = RPI::RenderPipeline::CreateRenderPipelineForWindow(pipelineDesc, *m_windowContext.get(), AZ::RPI::WindowContext::SwapChainMode::XrRight);
+            
+            //Add both the pipelines to the scene
+            m_rpiScene->AddRenderPipeline(renderPipelineLeft);
+            m_rpiScene->AddRenderPipeline(renderPipelineRight);
+
+            renderPipelineLeft->SetDefaultStereoscopicViewFromEntity(m_cameraEntity->GetId(), 0); //Left eye
+            renderPipelineRight->SetDefaultStereoscopicViewFromEntity(m_cameraEntity->GetId(), 1); //Right eye
+
+            //Cache the pipelines in case we want to enable/disable them
+            m_xrPipelines.push_back(renderPipelineLeft);
+            m_xrPipelines.push_back(renderPipelineRight);
+
+            // Disable XR pipelines by default
+            DisableXrPipelines();
+        }
+
         // As part of our initialization we need to create the BRDF texture generation pipeline
         AZ::RPI::RenderPipelineDescriptor brdfPipelineDesc;
         brdfPipelineDesc.m_mainViewTagName = "MainCamera";
@@ -1687,7 +1717,7 @@ namespace AtomSampleViewer
         RPI::RenderPipelinePtr brdfTexturePipeline = AZ::RPI::RenderPipeline::CreateRenderPipeline(brdfPipelineDesc);
         m_rpiScene->AddRenderPipeline(brdfTexturePipeline);
         
-        // Save a reference to the generated BRDF texture so it doesn't get deleted if all the passes refering to it get deleted and it's ref count goes to zero
+        // Save a reference to the generated BRDF texture so it doesn't get deleted if all the passes referring to it get deleted and it's ref count goes to zero
         if (!m_brdfTexture)
         {
             const AZStd::shared_ptr<const RPI::PassTemplate> brdfTextureTemplate = RPI::PassSystemInterface::Get()->GetPassTemplate(Name("BRDFTextureTemplate"));
@@ -1716,6 +1746,7 @@ namespace AtomSampleViewer
             [[maybe_unused]] bool result = scene->UnsetSubsystem(m_rpiScene);
             AZ_Assert(result, "SampleComponentManager failed to unregister its RPI scene from the general scene.");
             
+            m_xrPipelines.clear();
             m_rpiScene = nullptr;
         }
     }
