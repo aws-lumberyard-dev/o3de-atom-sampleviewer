@@ -27,7 +27,7 @@ namespace AtomSampleViewer
     //!         Joystick - Camera movement, Button X - Camera Up (View space y-axis), Button Y - Camera Down (View space Y axis), Squeeze - Scales Controller model     
      //! Right controller
     //!         Joystick - View Orientation if Trigger button is pressed, otherwise it will use device for view tracking, 
-    //!         Button A - Iterate through lighting preset, Button B - Iterate through ground plane material, Squeeze - Scales Controller model     
+    //!         Button B - Iterate through lighting preset, Button B - Iterate through ground plane material, Squeeze - Scales Controller model     
     //!
     class XRRPIExampleComponent final
         : public CommonSampleComponentBase

@@ -23,7 +23,7 @@
 namespace AtomSampleViewer
 {
     static const float ControllerOffsetScale = 2.0f;
-    static const float ViewOrientationScale = 5.0f;
+    static const float ViewOrientationScale = 10.0f;
     static const float PixelToDegree = 1.0 / 360.0f;
 
     void XRRPIExampleComponent::Reflect(AZ::ReflectContext* context)
@@ -195,7 +195,7 @@ namespace AtomSampleViewer
                     controllerOrientation.SetY(-controllerPose.m_orientation.GetZ());
                     controllerOrientation.SetZ(controllerPose.m_orientation.GetY());
 
-                    //Apply a Rotation around X axis in order to orient the model to face away from you as default pose
+                    //Apply a Rotation of 90 deg around X axis in order to orient the model to face away from you as default pose
                     AZ::Transform controllerTransform = AZ::Transform::CreateFromQuaternionAndTranslation(
                                 controllerOrientation * AZ::Quaternion::CreateRotationX(-AZ::Constants::Pi / 2), AZ::Vector3(newControllerPos.GetX(), newControllerPos.GetY(),newControllerPos.GetZ()));
                 
@@ -222,7 +222,7 @@ namespace AtomSampleViewer
             AZ::Debug::NoClipControllerRequestBus::Event(GetCameraEntityId(), &AZ::Debug::NoClipControllerRequests::SetCameraStateUp, yButtonState);
             AZ::Debug::NoClipControllerRequestBus::Event(GetCameraEntityId(), &AZ::Debug::NoClipControllerRequests::SetCameraStateDown, xButtonState);
 
-            // Switch to the next ground floor using the A-button
+            // Switch to updating the view using right joystick controller if the Trigger button on the right controller is pressed
             m_xrSystem->GetTriggerState(1) > 0.1f ? m_rightTriggerButtonPressed = true : m_rightTriggerButtonPressed = false;
             if (m_rightTriggerButtonPressed)
             { 
@@ -248,13 +248,8 @@ namespace AtomSampleViewer
                     viewLocalPoseOrientation.SetX(-frontPoseData.m_orientation.GetX());
                     viewLocalPoseOrientation.SetY(frontPoseData.m_orientation.GetZ());
                     viewLocalPoseOrientation.SetZ(-frontPoseData.m_orientation.GetY());
-                    Camera::CameraRequestBus::Event(GetCameraEntityId(), &Camera::CameraRequestBus::Events::SetStereoscopicView, viewLocalPoseOrientation, i);
+                    Camera::CameraRequestBus::Event(GetCameraEntityId(), &Camera::CameraRequestBus::Events::SetXRViewQuaternion, viewLocalPoseOrientation, i);
                 }
-
-                //Update the camera heading as well as pitch in order to make sure joystick movement is accurate
-                const AZ::Vector3 eulerRadians = frontPoseData.m_orientation.GetEulerRadians();
-                //AZ::Debug::NoClipControllerRequestBus::Event(GetCameraEntityId(), &AZ::Debug::NoClipControllerRequests::SetHeading, eulerRadians.GetZ());
-                //AZ::Debug::NoClipControllerRequestBus::Event(GetCameraEntityId(), &AZ::Debug::NoClipControllerRequests::SetPitch, eulerRadians.GetX());
             }
 
             // Switch to the next lighting preset using the B-button
