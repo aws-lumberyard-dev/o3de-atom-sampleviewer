@@ -1696,8 +1696,8 @@ namespace AtomSampleViewer
             m_rpiScene->AddRenderPipeline(renderPipelineLeft);
             m_rpiScene->AddRenderPipeline(renderPipelineRight);
 
-            renderPipelineLeft->SetDefaultStereoscopicViewFromEntity(m_cameraEntity->GetId(), 0); //Left eye
-            renderPipelineRight->SetDefaultStereoscopicViewFromEntity(m_cameraEntity->GetId(), 1); //Right eye
+            renderPipelineLeft->SetDefaultStereoscopicViewFromEntity(m_cameraEntity->GetId(), RPI::ViewType::XrLeft); //Left eye
+            renderPipelineRight->SetDefaultStereoscopicViewFromEntity(m_cameraEntity->GetId(), RPI::ViewType::XrRight); //Right eye
 
             //Cache the pipelines in case we want to enable/disable them
             m_xrPipelines.push_back(renderPipelineLeft);
