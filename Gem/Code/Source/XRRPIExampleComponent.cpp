@@ -30,9 +30,8 @@ namespace AtomSampleViewer
     {
         if (AZ::SerializeContext* serializeContext = azrtti_cast<AZ::SerializeContext*>(context))
         {
-            serializeContext->Class < XRRPIExampleComponent, AZ::Component>()
-                ->Version(0)
-            ;
+            serializeContext->Class<XRRPIExampleComponent, AZ::Component>()
+                ->Version(0);
         }
     }
 
