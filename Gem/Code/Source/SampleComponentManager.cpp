@@ -1561,33 +1561,40 @@ namespace AtomSampleViewer
         m_rhiScene = RPI::Scene::CreateScene(sceneDesc);
         m_rhiScene->Activate();
 
-        RPI::RenderPipelineDescriptor pipelineDesc;
+        const bool xrSystemRegistered = (AZ::RPI::RPISystemInterface::Get()->GetXRSystem() != nullptr);
+        const bool createDefaultRenderPipeline = !xrSystemRegistered || r_EnableDefaultRenderPipelineOnXR;
 
-        pipelineDesc.m_name = "RHISamplePipeline";
-        pipelineDesc.m_rootPassTemplate = "RHISamplePipelineTemplate";
-        // Add view to pipeline since there are few RHI samples are using ViewSrg
-        pipelineDesc.m_mainViewTagName = "MainCamera";
-
-        m_renderPipeline = RPI::RenderPipeline::CreateRenderPipelineForWindow(pipelineDesc, *m_windowContext.get());
-        m_rhiScene->AddRenderPipeline(m_renderPipeline);
-        m_renderPipeline->SetDefaultViewFromEntity(m_cameraEntity->GetId());
-        
-
-        // Get RHISamplePass
-        AZ::RPI::PassFilter passFilter = AZ::RPI::PassFilter::CreateWithPassName(AZ::Name("RHISamplePass"), m_renderPipeline.get());
-        m_rhiSamplePasses.push_back(azrtti_cast<RHISamplePass*>(AZ::RPI::PassSystemInterface::Get()->FindFirstPass(passFilter)));
-
-        AZ::RPI::RPISystemInterface* rpiSystem = AZ::RPI::RPISystemInterface::Get();
-        if (rpiSystem->GetXRSystem())
+        if (createDefaultRenderPipeline)
         {
+            RPI::RenderPipelineDescriptor pipelineDesc;
+            pipelineDesc.m_name = "RHISamplePipeline";
+            pipelineDesc.m_rootPassTemplate = "RHISamplePipelineTemplate";
+            // Add view to pipeline since there are few RHI samples are using ViewSrg
+            pipelineDesc.m_mainViewTagName = "MainCamera";
+
+            m_renderPipeline = RPI::RenderPipeline::CreateRenderPipelineForWindow(pipelineDesc, *m_windowContext.get());
+            m_rhiScene->AddRenderPipeline(m_renderPipeline);
+            m_renderPipeline->SetDefaultViewFromEntity(m_cameraEntity->GetId());
+
+            // Get RHISamplePass
+            AZ::RPI::PassFilter passFilter = AZ::RPI::PassFilter::CreateWithPassName(AZ::Name("RHISamplePass"), m_renderPipeline.get());
+            m_rhiSamplePasses.push_back(azrtti_cast<RHISamplePass*>(AZ::RPI::PassSystemInterface::Get()->FindFirstPass(passFilter)));
+        }
+
+        if (xrSystemRegistered)
+        {
+            RPI::RenderPipelineDescriptor xrPipelineDesc;
+            xrPipelineDesc.m_mainViewTagName = "MainCamera";
+
             // Build the pipeline for left eye
-            pipelineDesc.m_name = "RHISamplePipelineXRLeft";
-            pipelineDesc.m_rootPassTemplate = "RHISamplePipelineXRLeftTemplate";
-            RPI::RenderPipelinePtr renderPipelineLeft = RPI::RenderPipeline::CreateRenderPipelineForWindow(pipelineDesc, *m_windowContext.get(), AZ::RPI::WindowContext::SwapChainMode::XrLeft);
+            xrPipelineDesc.m_name = "RHISamplePipelineXRLeft";
+            xrPipelineDesc.m_rootPassTemplate = "RHISamplePipelineXRLeftTemplate";
+            RPI::RenderPipelinePtr renderPipelineLeft = RPI::RenderPipeline::CreateRenderPipelineForWindow(xrPipelineDesc, *m_windowContext.get(), AZ::RPI::WindowContext::SwapChainMode::XrLeft);
+
             // Build the pipeline for right eye
-            pipelineDesc.m_name = "RHISamplePipelineXRRight";
-            pipelineDesc.m_rootPassTemplate = "RHISamplePipelineXRRightTemplate";
-            RPI::RenderPipelinePtr renderPipelineRight = RPI::RenderPipeline::CreateRenderPipelineForWindow(pipelineDesc, *m_windowContext.get(), AZ::RPI::WindowContext::SwapChainMode::XrRight);
+            xrPipelineDesc.m_name = "RHISamplePipelineXRRight";
+            xrPipelineDesc.m_rootPassTemplate = "RHISamplePipelineXRRightTemplate";
+            RPI::RenderPipelinePtr renderPipelineRight = RPI::RenderPipeline::CreateRenderPipelineForWindow(xrPipelineDesc, *m_windowContext.get(), AZ::RPI::WindowContext::SwapChainMode::XrRight);
 
             //Add both the pipelines to the scene
             m_rhiScene->AddRenderPipeline(renderPipelineLeft);
@@ -1609,12 +1616,6 @@ namespace AtomSampleViewer
             //Cache the pipelines in case we want to enable/disable them
             m_xrPipelines.push_back(renderPipelineLeft);
             m_xrPipelines.push_back(renderPipelineRight);
-
-            // Disable default pipeline
-            if (!r_EnableDefaultRenderPipelineOnXR)
-            {
-                m_renderPipeline->RemoveFromRenderTick();
-            }
 
             //Disable XR pipelines by default
             DisableXrPipelines();
@@ -1667,36 +1668,45 @@ namespace AtomSampleViewer
         // Register scene to RPI system so it will be processed/rendered per tick
         RPI::RPISystemInterface::Get()->RegisterScene(m_rpiScene);
 
-        // Create MainPipeline as its render pipeline
-        RPI::RenderPipelineDescriptor pipelineDesc;
-        pipelineDesc.m_name = "RPISamplePipeline";
-        pipelineDesc.m_rootPassTemplate = GetRootPassTemplateName();
-        pipelineDesc.m_mainViewTagName = "MainCamera";
-
         // set pipeline MSAA samples
         AZ_Assert(IsValidNumMSAASamples(m_numMSAASamples), "Invalid MSAA sample setting");
-        pipelineDesc.m_renderSettings.m_multisampleState.m_samples = static_cast<uint16_t>(m_numMSAASamples);
-        bool isNonMsaaPipeline = (pipelineDesc.m_renderSettings.m_multisampleState.m_samples == 1);
+        const bool isNonMsaaPipeline = (m_numMSAASamples == 1);
         const char* supervariantName = isNonMsaaPipeline ? AZ::RPI::NoMsaaSupervariantName : "";
         AZ::RPI::ShaderSystemInterface::Get()->SetSupervariantName(AZ::Name(supervariantName));
 
-        m_renderPipeline = RPI::RenderPipeline::CreateRenderPipelineForWindow(pipelineDesc, *m_windowContext.get());
-        m_rpiScene->AddRenderPipeline(m_renderPipeline);
+        const bool xrSystemRegistered = (AZ::RPI::RPISystemInterface::Get()->GetXRSystem() != nullptr);
+        const bool createDefaultRenderPipeline = !xrSystemRegistered || r_EnableDefaultRenderPipelineOnXR;
 
-        m_renderPipeline->SetDefaultViewFromEntity(m_cameraEntity->GetId());
-
-        AZ::RPI::RPISystemInterface* rpiSystem = AZ::RPI::RPISystemInterface::Get();
-        if (rpiSystem->GetXRSystem())
+        if (createDefaultRenderPipeline)
         {
+            // Create MainPipeline as its render pipeline
+            RPI::RenderPipelineDescriptor pipelineDesc;
+            pipelineDesc.m_name = "RPISamplePipeline";
+            pipelineDesc.m_rootPassTemplate = GetRootPassTemplateName();
+            pipelineDesc.m_mainViewTagName = "MainCamera";
+            pipelineDesc.m_renderSettings.m_multisampleState.m_samples = static_cast<uint16_t>(m_numMSAASamples);
+
+            m_renderPipeline = RPI::RenderPipeline::CreateRenderPipelineForWindow(pipelineDesc, *m_windowContext.get());
+            m_rpiScene->AddRenderPipeline(m_renderPipeline);
+
+            m_renderPipeline->SetDefaultViewFromEntity(m_cameraEntity->GetId());
+        }
+
+        if (xrSystemRegistered)
+        {
+            RPI::RenderPipelineDescriptor xrPipelineDesc;
+            xrPipelineDesc.m_mainViewTagName = "MainCamera";
+            xrPipelineDesc.m_renderSettings.m_multisampleState.m_samples = static_cast<uint16_t>(m_numMSAASamples);
+
             // Build the pipeline for left eye
-            pipelineDesc.m_name = "RPISamplePipelineXRLeft";
-            pipelineDesc.m_rootPassTemplate = "LowEndPipelineXRLeftTemplate";
-            RPI::RenderPipelinePtr renderPipelineLeft = RPI::RenderPipeline::CreateRenderPipelineForWindow(pipelineDesc, *m_windowContext.get(), AZ::RPI::WindowContext::SwapChainMode::XrLeft);
+            xrPipelineDesc.m_name = "RPISamplePipelineXRLeft";
+            xrPipelineDesc.m_rootPassTemplate = "LowEndPipelineXRLeftTemplate";
+            RPI::RenderPipelinePtr renderPipelineLeft = RPI::RenderPipeline::CreateRenderPipelineForWindow(xrPipelineDesc, *m_windowContext.get(), AZ::RPI::WindowContext::SwapChainMode::XrLeft);
             
             // Build the pipeline for right eye
-            pipelineDesc.m_name = "RHISamplePipelineXRRight";
-            pipelineDesc.m_rootPassTemplate = "LowEndPipelineXRRightTemplate";
-            RPI::RenderPipelinePtr renderPipelineRight = RPI::RenderPipeline::CreateRenderPipelineForWindow(pipelineDesc, *m_windowContext.get(), AZ::RPI::WindowContext::SwapChainMode::XrRight);
+            xrPipelineDesc.m_name = "RHISamplePipelineXRRight";
+            xrPipelineDesc.m_rootPassTemplate = "LowEndPipelineXRRightTemplate";
+            RPI::RenderPipelinePtr renderPipelineRight = RPI::RenderPipeline::CreateRenderPipelineForWindow(xrPipelineDesc, *m_windowContext.get(), AZ::RPI::WindowContext::SwapChainMode::XrRight);
             
             //Add both the pipelines to the scene
             m_rpiScene->AddRenderPipeline(renderPipelineLeft);
@@ -1708,12 +1718,6 @@ namespace AtomSampleViewer
             //Cache the pipelines in case we want to enable/disable them
             m_xrPipelines.push_back(renderPipelineLeft);
             m_xrPipelines.push_back(renderPipelineRight);
-
-            // Disable default pipeline
-            if (!r_EnableDefaultRenderPipelineOnXR)
-            {
-                m_renderPipeline->RemoveFromRenderTick();
-            }
 
             // Disable XR pipelines by default
             DisableXrPipelines();
