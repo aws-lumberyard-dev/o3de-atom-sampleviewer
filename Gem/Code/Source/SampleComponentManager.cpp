@@ -147,7 +147,11 @@ namespace AtomSampleViewer
 #if AZ_TRAIT_OS_IS_HOST_OS_PLATFORM
     void CVar_EnableHostRenderPipelineOnXR(const bool& value)
     {
-        SampleComponentManagerRequestBus::Broadcast(&SampleComponentManagerRequests::EnableRenderPipeline, value);
+        const bool xrSystemRegistered = (AZ::RPI::RPISystemInterface::Get()->GetXRSystem() != nullptr);
+        if (xrSystemRegistered)
+        {
+            SampleComponentManagerRequestBus::Broadcast(&SampleComponentManagerRequests::EnableRenderPipeline, value);
+        }
     }
 
     AZ_CVAR(bool, r_EnableHostRenderPipelineOnXR, false, CVar_EnableHostRenderPipelineOnXR, AZ::ConsoleFunctorFlags::Null,
