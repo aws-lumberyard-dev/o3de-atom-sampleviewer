@@ -144,8 +144,15 @@ namespace Platform
 
 namespace AtomSampleViewer
 {
-    AZ_CVAR(bool, r_EnableDefaultRenderPipelineOnXR, false, nullptr, AZ::ConsoleFunctorFlags::Null,
-        "When an XR system is present this will enable the regular render pipeline on host PC as well (false by default).");
+#if AZ_TRAIT_OS_IS_HOST_OS_PLATFORM
+    void CVar_EnableHostRenderPipelineOnXR(const bool& value)
+    {
+        SampleComponentManagerRequestBus::Broadcast(&SampleComponentManagerRequests::EnableRenderPipeline, value);
+    }
+
+    AZ_CVAR(bool, r_EnableHostRenderPipelineOnXR, false, CVar_EnableHostRenderPipelineOnXR, AZ::ConsoleFunctorFlags::Null,
+        "When an XR system is present in a host platform, this will enable the regular render pipeline on the host PC as well (false by default).");
+#endif
 
     namespace
     {
@@ -566,14 +573,7 @@ namespace AtomSampleViewer
         if (rpiSystem->GetXRSystem())
         {
             //Only enable XR pipelines if the XR drivers indicate we have accurate pose information from the device
-            if (rpiSystem->GetXRSystem()->ShouldRender())
-            {
-                EnableXrPipelines();
-            }
-            else
-            {
-                DisableXrPipelines();
-            }
+            EnableXrPipelines(rpiSystem->GetXRSystem()->ShouldRender());
         }
 
         if (m_imGuiFrameTimer)
@@ -1303,6 +1303,39 @@ namespace AtomSampleViewer
         ReleaseRPIScene();
     }
 
+    void SampleComponentManager::EnableRenderPipeline(bool value)
+    {
+        if (m_renderPipeline)
+        {
+            if (value)
+            {
+                m_renderPipeline->AddToRenderTick();
+            }
+            else
+            {
+                m_renderPipeline->RemoveFromRenderTick();
+            }
+        }
+    }
+
+    void SampleComponentManager::EnableXrPipelines(bool value)
+    {
+        for (RPI::RenderPipelinePtr xrPipeline : m_xrPipelines)
+        {
+            if (xrPipeline)
+            {
+                if (value)
+                {
+                    xrPipeline->AddToRenderTick();
+                }
+                else
+                {
+                    xrPipeline->RemoveFromRenderTick();
+                }
+            }
+        }
+    }
+
     void SampleComponentManager::ShowFrameCaptureDialog()
     {
         static bool requestCaptureOnNextFrame = false;
@@ -1562,7 +1595,11 @@ namespace AtomSampleViewer
         m_rhiScene->Activate();
 
         const bool xrSystemRegistered = (AZ::RPI::RPISystemInterface::Get()->GetXRSystem() != nullptr);
-        const bool createDefaultRenderPipeline = !xrSystemRegistered || r_EnableDefaultRenderPipelineOnXR;
+#if AZ_TRAIT_OS_IS_HOST_OS_PLATFORM
+        const bool createDefaultRenderPipeline = true;
+#else
+        const bool createDefaultRenderPipeline = !xrSystemRegistered;
+#endif
 
         if (createDefaultRenderPipeline)
         {
@@ -1579,6 +1616,14 @@ namespace AtomSampleViewer
             // Get RHISamplePass
             AZ::RPI::PassFilter passFilter = AZ::RPI::PassFilter::CreateWithPassName(AZ::Name("RHISamplePass"), m_renderPipeline.get());
             m_rhiSamplePasses.push_back(azrtti_cast<RHISamplePass*>(AZ::RPI::PassSystemInterface::Get()->FindFirstPass(passFilter)));
+
+#if AZ_TRAIT_OS_IS_HOST_OS_PLATFORM
+            // Disable default pipeline based on xr system and its cvar for host platforms
+            if (xrSystemRegistered && !r_EnableHostRenderPipelineOnXR)
+            {
+                EnableRenderPipeline(false);
+            }
+#endif
         }
 
         if (xrSystemRegistered)
@@ -1618,7 +1663,7 @@ namespace AtomSampleViewer
             m_xrPipelines.push_back(renderPipelineRight);
 
             //Disable XR pipelines by default
-            DisableXrPipelines();
+            EnableXrPipelines(false);
         }
 
         // Register the RHi scene
@@ -1675,7 +1720,11 @@ namespace AtomSampleViewer
         AZ::RPI::ShaderSystemInterface::Get()->SetSupervariantName(AZ::Name(supervariantName));
 
         const bool xrSystemRegistered = (AZ::RPI::RPISystemInterface::Get()->GetXRSystem() != nullptr);
-        const bool createDefaultRenderPipeline = !xrSystemRegistered || r_EnableDefaultRenderPipelineOnXR;
+#if AZ_TRAIT_OS_IS_HOST_OS_PLATFORM
+        const bool createDefaultRenderPipeline = true;
+#else
+        const bool createDefaultRenderPipeline = !xrSystemRegistered;
+#endif
 
         if (createDefaultRenderPipeline)
         {
@@ -1690,6 +1739,14 @@ namespace AtomSampleViewer
             m_rpiScene->AddRenderPipeline(m_renderPipeline);
 
             m_renderPipeline->SetDefaultViewFromEntity(m_cameraEntity->GetId());
+
+#if AZ_TRAIT_OS_IS_HOST_OS_PLATFORM
+            // Disable default pipeline based on xr system and its cvar for host platforms
+            if (xrSystemRegistered && !r_EnableHostRenderPipelineOnXR)
+            {
+                EnableRenderPipeline(false);
+            }
+#endif
         }
 
         if (xrSystemRegistered)
@@ -1720,7 +1777,7 @@ namespace AtomSampleViewer
             m_xrPipelines.push_back(renderPipelineRight);
 
             // Disable XR pipelines by default
-            DisableXrPipelines();
+            EnableXrPipelines(false);
         }
 
         // As part of our initialization we need to create the BRDF texture generation pipeline
@@ -1788,22 +1845,6 @@ namespace AtomSampleViewer
         for (AZ::RPI::Ptr<RHISamplePass> samplePass : m_rhiSamplePasses)
         {
             samplePass->SetRHISample(sampleComponent);
-        }
-    }
-
-    void SampleComponentManager::DisableXrPipelines()
-    {
-        for (RPI::RenderPipelinePtr xrPipeline : m_xrPipelines)
-        {
-            xrPipeline->RemoveFromRenderTick();
-        }
-    }
-
-    void SampleComponentManager::EnableXrPipelines()
-    {
-        for (RPI::RenderPipelinePtr xrPipeline : m_xrPipelines)
-        {
-            xrPipeline->AddToRenderTick();
         }
     }
 
