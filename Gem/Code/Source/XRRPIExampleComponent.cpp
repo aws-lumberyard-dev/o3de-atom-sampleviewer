@@ -240,11 +240,11 @@ namespace AtomSampleViewer
             }
             else
             {
-				//Convert to O3de's coordinate system and update the camera orientation for the correct eye view
-				AZ::Quaternion viewLocalPoseOrientation = frontPoseData.m_orientation;
-				viewLocalPoseOrientation.SetX(-frontPoseData.m_orientation.GetX());
-				viewLocalPoseOrientation.SetY(frontPoseData.m_orientation.GetZ());
-				viewLocalPoseOrientation.SetZ(-frontPoseData.m_orientation.GetY());
+                //Convert to O3de's coordinate system and update the camera orientation for the correct eye view
+                AZ::Quaternion viewLocalPoseOrientation = frontPoseData.m_orientation;
+                viewLocalPoseOrientation.SetX(-frontPoseData.m_orientation.GetX());
+                viewLocalPoseOrientation.SetY(frontPoseData.m_orientation.GetZ());
+                viewLocalPoseOrientation.SetZ(-frontPoseData.m_orientation.GetY());
                 for (AZ::u32 i = 0; i < m_numXrViews; i++)
                 {
                     Camera::CameraRequestBus::Event(GetCameraEntityId(), &Camera::CameraRequestBus::Events::SetXRViewQuaternion, viewLocalPoseOrientation, i);
