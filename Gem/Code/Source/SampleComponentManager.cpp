@@ -1638,12 +1638,12 @@ namespace AtomSampleViewer
             // Build the pipeline for left eye
             xrPipelineDesc.m_name = "RHISamplePipelineXRLeft";
             xrPipelineDesc.m_rootPassTemplate = "RHISamplePipelineXRLeftTemplate";
-            RPI::RenderPipelinePtr renderPipelineLeft = RPI::RenderPipeline::CreateRenderPipelineForWindow(xrPipelineDesc, *m_windowContext.get(), AZ::RPI::WindowContext::SwapChainMode::XrLeft);
+            RPI::RenderPipelinePtr renderPipelineLeft = RPI::RenderPipeline::CreateRenderPipelineForWindow(xrPipelineDesc, *m_windowContext.get(), AZ::RPI::ViewType::XrLeft);
 
             // Build the pipeline for right eye
             xrPipelineDesc.m_name = "RHISamplePipelineXRRight";
             xrPipelineDesc.m_rootPassTemplate = "RHISamplePipelineXRRightTemplate";
-            RPI::RenderPipelinePtr renderPipelineRight = RPI::RenderPipeline::CreateRenderPipelineForWindow(xrPipelineDesc, *m_windowContext.get(), AZ::RPI::WindowContext::SwapChainMode::XrRight);
+            RPI::RenderPipelinePtr renderPipelineRight = RPI::RenderPipeline::CreateRenderPipelineForWindow(xrPipelineDesc, *m_windowContext.get(), AZ::RPI::ViewType::XrRight);
 
             //Add both the pipelines to the scene
             m_rhiScene->AddRenderPipeline(renderPipelineLeft);
@@ -1762,12 +1762,12 @@ namespace AtomSampleViewer
             // Build the pipeline for left eye
             xrPipelineDesc.m_name = "RPISamplePipelineXRLeft";
             xrPipelineDesc.m_rootPassTemplate = "LowEndPipelineXRLeftTemplate";
-            RPI::RenderPipelinePtr renderPipelineLeft = RPI::RenderPipeline::CreateRenderPipelineForWindow(xrPipelineDesc, *m_windowContext.get(), AZ::RPI::WindowContext::SwapChainMode::XrLeft);
+            RPI::RenderPipelinePtr renderPipelineLeft = RPI::RenderPipeline::CreateRenderPipelineForWindow(xrPipelineDesc, *m_windowContext.get(), AZ::RPI::ViewType::XrLeft);
             
             // Build the pipeline for right eye
             xrPipelineDesc.m_name = "RHISamplePipelineXRRight";
             xrPipelineDesc.m_rootPassTemplate = "LowEndPipelineXRRightTemplate";
-            RPI::RenderPipelinePtr renderPipelineRight = RPI::RenderPipeline::CreateRenderPipelineForWindow(xrPipelineDesc, *m_windowContext.get(), AZ::RPI::WindowContext::SwapChainMode::XrRight);
+            RPI::RenderPipelinePtr renderPipelineRight = RPI::RenderPipeline::CreateRenderPipelineForWindow(xrPipelineDesc, *m_windowContext.get(), AZ::RPI::ViewType::XrRight);
             
             //Add both the pipelines to the scene
             m_rpiScene->AddRenderPipeline(renderPipelineLeft);
