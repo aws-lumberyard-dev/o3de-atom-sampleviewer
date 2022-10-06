@@ -165,6 +165,7 @@ namespace AtomSampleViewer
         constexpr const char* GpuProfilerToolName = "GPU Profiler";
         constexpr const char* FileIoProfilerToolName = "File IO Profiler";
         constexpr const char* TransientAttachmentProfilerToolName = "Transient Attachment Profiler";
+        constexpr const char* SampleSetting = "/O3DE/AtomSampleViewer/Sample";
     }
 
     bool IsValidNumMSAASamples(int numSamples)
@@ -244,6 +245,30 @@ namespace AtomSampleViewer
     static SampleEntry NewPerfSample(const AZStd::string& name, AZStd::function<bool()> isSupportedFunction)
     {
         return NewSample<T>(SamplePipelineType::RPI, "Performance", name, isSupportedFunction);
+    }
+
+    static AZStd::string GetTargetSampleName()
+    {
+        //Check command line option
+        const AzFramework::CommandLine* commandLine = nullptr;
+        AzFramework::ApplicationRequests::Bus::BroadcastResult(commandLine, &AzFramework::ApplicationRequests::GetCommandLine);
+        if (commandLine->HasSwitch("sample"))
+        {
+            AZStd::string targetSampleName = commandLine->GetSwitchValue("sample", 0);
+            return targetSampleName;
+        }
+
+        //Check settings registry
+        if (AZ::SettingsRegistryInterface* settingsRegistry = AZ::SettingsRegistry::Get())
+        {
+            if (AZStd::string targetSampleName;
+                settingsRegistry->Get(targetSampleName, SampleSetting))
+            {
+                return targetSampleName;
+            }
+        }
+
+        return {};
     }
 
     void SampleComponentManager::Reflect(AZ::ReflectContext* context)
@@ -466,11 +491,9 @@ namespace AtomSampleViewer
 
         bool targetSampleFound = false;
 
-        const AzFramework::CommandLine* commandLine = nullptr;
-        AzFramework::ApplicationRequests::Bus::BroadcastResult(commandLine, &AzFramework::ApplicationRequests::GetCommandLine);
-        if (commandLine->HasSwitch("sample"))
+        if (AZStd::string targetSampleName = GetTargetSampleName();
+            !targetSampleName.empty())
         {
-            AZStd::string targetSampleName = commandLine->GetSwitchValue("sample", 0);
             AZStd::to_lower(targetSampleName.begin(), targetSampleName.end());
 
             for (int32_t i = 0; i < m_availableSamples.size(); ++i)
@@ -506,6 +529,9 @@ namespace AtomSampleViewer
             }
             AZ_Warning("SampleComponentManager", targetSampleFound, "Failed find target sample %s", targetSampleName.c_str());
         }
+
+        const AzFramework::CommandLine* commandLine = nullptr;
+        AzFramework::ApplicationRequests::Bus::BroadcastResult(commandLine, &AzFramework::ApplicationRequests::GetCommandLine);
         if (commandLine->HasSwitch("timingSamples"))
         {
                 AZStd::string timingSamplesStr = commandLine->GetSwitchValue("timingSamples", 0);
