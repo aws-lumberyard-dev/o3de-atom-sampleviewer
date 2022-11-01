@@ -1739,6 +1739,7 @@ namespace AtomSampleViewer
             pipelineDesc.m_name = "RPISamplePipeline";
             pipelineDesc.m_rootPassTemplate = GetRootPassTemplateName();
             pipelineDesc.m_mainViewTagName = "MainCamera";
+            pipelineDesc.m_allowModification = true;
             pipelineDesc.m_renderSettings.m_multisampleState.m_samples = static_cast<uint16_t>(m_numMSAASamples);
 
             m_renderPipeline = RPI::RenderPipeline::CreateRenderPipelineForWindow(pipelineDesc, *m_windowContext.get());
@@ -1757,6 +1758,7 @@ namespace AtomSampleViewer
         {
             RPI::RenderPipelineDescriptor xrPipelineDesc;
             xrPipelineDesc.m_mainViewTagName = "MainCamera";
+            xrPipelineDesc.m_allowModification = true;
             xrPipelineDesc.m_renderSettings.m_multisampleState.m_samples = static_cast<uint16_t>(m_numMSAASamples);
 
             // Build the pipeline for left eye

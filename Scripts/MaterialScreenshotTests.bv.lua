@@ -245,3 +245,35 @@ Print('Saving screenshots to ' .. NormalizePath(g_screenshotOutputFolder .. g_te
 GenerateMaterialScreenshot('Level E', '004_MetalMap')
 GenerateMaterialScreenshot('Level F', '009_Opacity_Blended', {lighting="Neutral Urban", model=g_beveledCubeModel})
 
+SetImguiValue('Use Low End Pipeline', false)
+
+----------------------------------------------------------------------
+-- Prototype Deferred Pipeline...
+
+-- TODO: Switch this test case to use StandardPBR once it is ported to the material pipeline system.
+g_testMaterialsFolder = 'materials/materialpipelinetest/'
+g_testCaseFolder = 'PrototypeDeferredPipeline'
+Print('Saving screenshots to ' .. NormalizePath(g_screenshotOutputFolder .. g_testCaseFolder))
+
+SetImguiValue('Use Deferred Pipeline', true)
+
+GenerateMaterialScreenshot('Level E', 'MaterialPipelineTest_Basic', {screenshotFilename="MaterialPipelineTest_Basic_DeferredPipeline"})
+
+SetImguiValue('Use Deferred Pipeline', false)
+
+----------------------------------------------------------------------
+-- Material Pipeline Abstraction...
+
+-- These tests are temporary, specifically for regression testing the new material pipeline system while it is in development.
+-- Once the core material types like StandardPBR are ported to use material pipelines, we can remove these test cases.
+
+g_testMaterialsFolder = 'materials/materialpipelinetest/'
+g_testCaseFolder = 'MaterialPipelineSystem'
+Print('Saving screenshots to ' .. NormalizePath(g_screenshotOutputFolder .. g_testCaseFolder))
+
+SetImguiValue('Use Low End Pipeline', false)
+GenerateMaterialScreenshot('Level E', 'MaterialPipelineTest_Basic', {screenshotFilename="MaterialPipelineTest_Basic_MainPipeline"})
+
+SetImguiValue('Use Low End Pipeline', true)
+GenerateMaterialScreenshot('Level E', 'MaterialPipelineTest_Basic', {screenshotFilename="MaterialPipelineTest_Basic_LowEndPipeline"})
+
