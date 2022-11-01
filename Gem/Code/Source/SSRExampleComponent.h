@@ -53,7 +53,9 @@ namespace AtomSampleViewer
         AZ::Render::MeshFeatureProcessorInterface::MeshHandle m_boxMeshHandle;
         AZ::Render::MeshFeatureProcessorInterface::MeshHandle m_shaderBallMeshHandle;
         AZ::Render::MeshFeatureProcessorInterface::MeshHandle m_groundMeshHandle;
+        AZ::Render::MeshFeatureProcessorInterface::MeshHandle m_groundMeshHandle1;
         AZ::Data::Asset<AZ::RPI::MaterialAsset> m_groundMaterialAsset;
+        AZ::Data::Asset<AZ::RPI::MaterialAsset> m_groundMaterialAsset1;
 
         // ground plane material setting
         int m_groundPlaneMaterial = 0;
@@ -66,5 +68,8 @@ namespace AtomSampleViewer
         bool m_enableSSR = true;
         bool m_resetCamera = true;
         float m_originalFarClipDistance = 0.0f;
+
+		float m_varianceCutOff = 0.05f;
+        float m_motionFactor = 0.05f;
     };
 } // namespace AtomSampleViewer

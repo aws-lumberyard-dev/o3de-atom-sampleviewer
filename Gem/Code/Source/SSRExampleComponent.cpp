@@ -20,6 +20,9 @@
 
 #include <SSRExampleComponent_Traits_Platform.h>
 
+#include <Atom/RPI.Public/Pass/VRSImageGenPass.h>
+#include <Atom/RPI.Public/Pass/PassFilter.h>
+
 namespace AtomSampleViewer
 {
     void SSRExampleComponent::Reflect(AZ::ReflectContext* context)
@@ -63,6 +66,7 @@ namespace AtomSampleViewer
         GetMeshFeatureProcessor()->ReleaseMesh(m_boxMeshHandle);
         GetMeshFeatureProcessor()->ReleaseMesh(m_shaderBallMeshHandle);
         GetMeshFeatureProcessor()->ReleaseMesh(m_groundMeshHandle);
+        GetMeshFeatureProcessor()->ReleaseMesh(m_groundMeshHandle1);
 
         Camera::CameraRequestBus::Event(GetCameraEntityId(), &Camera::CameraRequestBus::Events::SetFarClipDistance, m_originalFarClipDistance);
         AZ::Debug::CameraControllerRequestBus::Event(GetCameraEntityId(), &AZ::Debug::CameraControllerRequestBus::Events::Disable);
@@ -118,6 +122,11 @@ namespace AtomSampleViewer
             meshFeatureProcessor->ReleaseMesh(m_groundMeshHandle);
         }
 
+		if (m_groundMeshHandle1.IsValid())
+		{
+			meshFeatureProcessor->ReleaseMesh(m_groundMeshHandle1);
+		}
+
         // load material
         AZStd::string materialName;
         switch (m_groundPlaneMaterial)
@@ -139,13 +148,22 @@ namespace AtomSampleViewer
         AZ::Data::AssetId groundMaterialAssetId = AZ::RPI::AssetUtils::GetAssetIdForProductPath(materialName.c_str(), AZ::RPI::AssetUtils::TraceLevel::Error);
         m_groundMaterialAsset.Create(groundMaterialAssetId);
 
+		///m_groundMaterialAsset1.Create(groundMaterialAssetId);
+
         // load mesh
         AZ::Data::Asset<AZ::RPI::ModelAsset> planeModel = AZ::RPI::AssetUtils::GetAssetByProductPath<AZ::RPI::ModelAsset>("objects/plane.azmodel", AZ::RPI::AssetUtils::TraceLevel::Error);
+        AZ::Data::Asset<AZ::RPI::ModelAsset> planeModel1 = AZ::RPI::AssetUtils::GetAssetByProductPath<AZ::RPI::ModelAsset>("objects/plane.azmodel", AZ::RPI::AssetUtils::TraceLevel::Error);
         m_groundMeshHandle = GetMeshFeatureProcessor()->AcquireMesh(AZ::Render::MeshHandleDescriptor{ planeModel }, AZ::RPI::Material::FindOrCreate(m_groundMaterialAsset));
+		//m_groundMeshHandle1 = GetMeshFeatureProcessor()->AcquireMesh(AZ::Render::MeshHandleDescriptor{ planeModel1 }, AZ::RPI::Material::FindOrCreate(m_groundMaterialAsset1));
 
         AZ::Transform transform = AZ::Transform::CreateIdentity();
-        const AZ::Vector3 nonUniformScale(15.0f, 15.0f, 1.0f);
+        const AZ::Vector3 nonUniformScale(50.0f, 50.0f, 1.0f);
         GetMeshFeatureProcessor()->SetTransform(m_groundMeshHandle, transform, nonUniformScale);
+
+		//AZ::Transform transform1 = AZ::Transform::CreateIdentity();
+        //transform1 *= AZ::Transform::CreateRotationY(AZ::Constants::Pi);
+		//const AZ::Vector3 nonUniformScale1(15.0f, 15.0f, 1.0f);
+		//GetMeshFeatureProcessor()->SetTransform(m_groundMeshHandle1, transform1, nonUniformScale1);
     }
 
     void SSRExampleComponent::OnTick([[maybe_unused]] float deltaTime, [[maybe_unused]] AZ::ScriptTimePoint timePoint)
@@ -162,6 +180,22 @@ namespace AtomSampleViewer
 
         DrawSidebar();
     }
+
+	void AddUiButton(const char* s, ImVec4 col, bool sameLine = true)
+	{
+		ImGui::ColorButton(s, col);
+		// set tooltip
+		if (ImGui::IsItemHovered())	ImGui::SetTooltip("Color Overlay for VRS rate of %s", s);
+		// disable drag and drop
+		if (ImGui::IsItemActive() && ImGui::BeginDragDropSource())ImGui::EndDragDropSource();
+
+		// add text in same line
+		ImGui::SameLine();
+		ImGui::Text("%s", s);
+
+		// convenience in case next item should be in same line, too:
+		if (sameLine) ImGui::SameLine();
+	}
 
     void SSRExampleComponent::DrawSidebar()
     {
@@ -191,6 +225,36 @@ namespace AtomSampleViewer
         ImGui::NewLine();
         ImGuiLightingPreset();
 
+		ImGui::Indent();
+		AddUiButton("1x1", ImVec4(1.0f, 0.0f, 0, 0));
+		AddUiButton("1x2", ImVec4(1.0f, 1.0f, 0, 0));
+		AddUiButton("2x1", ImVec4(1.0f, 0.5f, 0, 0));
+		AddUiButton("2x2", ImVec4(0.0f, 1.0f, 0, 0), false);
+
+		//if (m_node->AdditionalShadingRates())
+		{
+			AddUiButton("2x4", ImVec4(0.5f, 0.5f, 1.0f, 0));
+			AddUiButton("4x2", ImVec4(1.0f, 0.5f, 1.0f, 0));
+			AddUiButton("4x4", ImVec4(0.0f, 1.0f, 1.0f, 0), false);
+		}
+		ImGui::Unindent();
+
+        //const AZ::RPI::RenderPipelinePtr renderPipeline = m_scene->GetDefaultRenderPipeline();
+		AZ::RPI::PassFilter vrsImageGenPassFilter = AZ::RPI::PassFilter::CreateWithPassName(AZ::Name{ "VRSImageGenPass" }, m_scene);
+		AZ::RPI::Ptr<AZ::RPI::Pass> vrsImageGenPass = AZ::RPI::PassSystemInterface::Get()->FindFirstPass(vrsImageGenPassFilter);
+        if (vrsImageGenPass)
+        {
+            if (ImGui::SliderFloat("Luminance Variance cut off", &m_varianceCutOff, 0.0f, 0.1f))
+            {
+                AZ::RPI::VRSImageGenPass* temp = static_cast<AZ::RPI::VRSImageGenPass*>(vrsImageGenPass.get());
+                temp->m_VarianceCutoff = m_varianceCutOff;
+            }
+            if (ImGui::SliderFloat("Motion Variance cut off", &m_motionFactor, 0.0f, 0.1f))
+            {
+                AZ::RPI::VRSImageGenPass* temp = static_cast<AZ::RPI::VRSImageGenPass*>(vrsImageGenPass.get());
+                temp->m_MotionFactor = m_motionFactor;
+            }
+        }
         m_imguiSidebar.End();
     }
 
