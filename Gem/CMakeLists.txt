@@ -6,4 +6,6 @@
 #
 #
 
+set(ASV_OPENXR_SAMPLE_ENABLED FALSE CACHE BOOL "Enable the OpenXR Gems and samples in Atom Sample Viewer")
+
 add_subdirectory(Code)
