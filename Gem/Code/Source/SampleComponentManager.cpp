@@ -81,7 +81,6 @@
 #include <DepthOfFieldExampleComponent.h>
 #include <DynamicDrawExampleComponent.h>
 #include <DynamicMaterialTestComponent.h>
-#include <MaterialHotReloadTestComponent.h>
 #include <ExposureExampleComponent.h>
 #include <EyeMaterialExampleComponent.h>
 #include <SceneReloadSoakTestComponent.h>
@@ -314,7 +313,6 @@ namespace AtomSampleViewer
             NewRPISample<DecalExampleComponent>("Decals"),
             NewRPISample<DynamicDrawExampleComponent>("DynamicDraw"),
             NewRPISample<DynamicMaterialTestComponent>("DynamicMaterialTest"),
-            NewRPISample<MaterialHotReloadTestComponent>("MaterialHotReloadTest"),
             NewRPISample<MeshExampleComponent>("Mesh"),
             NewRPISample<MSAA_RPI_ExampleComponent>("MSAA"),
             NewRPISample<MultiRenderPipelineExampleComponent>("MultiRenderPipeline"),

@@ -135,8 +135,6 @@ set(FILES
     Source/EyeMaterialExampleComponent.cpp
     Source/LightCullingExampleComponent.cpp
     Source/LightCullingExampleComponent.h
-    Source/MaterialHotReloadTestComponent.cpp
-    Source/MaterialHotReloadTestComponent.h
     Source/MeshExampleComponent.cpp
     Source/MeshExampleComponent.h
     Source/MSAA_RPI_ExampleComponent.cpp
