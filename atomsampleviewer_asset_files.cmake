@@ -17,8 +17,6 @@ set(FILES
     Passes/CheckerboardPipeline.pass
     Passes/Fullscreen.pass
     Passes/FullscreenPipeline.pass
-    Passes/ImGuiNoInput.pass
-    Passes/ImGuiOnlyPipeline.pass
     Passes/RayTracingAmbientOcclusion.pass
     Passes/ReadbackFiller.pass
     Passes/ReadbackPipeline.pass
@@ -63,7 +61,6 @@ set(FILES
     Shaders/DebugVertexNormals.materialtype
     Shaders/DebugVertexNormals.shader
     Shaders/Instanced.azsl
-    Shaders/StaticMesh.azsl
     Shaders/ComprehensiveTestMaterial/Comprehensive.materialtype
     Shaders/ComprehensiveTestMaterial/Stacks.azsl
     Shaders/ComprehensiveTestMaterial/Stacks.shader
