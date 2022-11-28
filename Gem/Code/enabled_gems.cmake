@@ -24,6 +24,11 @@ set(ENABLED_GEMS
     UiBasics
     StreamerProfiler
     DiffuseProbeGrid
-    XR
-    OpenXRVk
 )
+
+if(ASV_OPENXR_SAMPLE_ENABLED)
+    list(APPEND ENABLED_GEMS
+        XR
+        OpenXRVk
+    )
+endif()
