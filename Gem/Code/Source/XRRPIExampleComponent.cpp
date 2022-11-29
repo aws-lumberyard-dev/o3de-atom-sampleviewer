@@ -9,6 +9,7 @@
 #include <XRRPIExampleComponent.h>
 #include <Atom/Component/DebugCamera/NoClipControllerComponent.h>
 #include <Atom/RPI.Public/Scene.h>
+#include <Atom/RPI.Public/RPISystem.h>
 #include <Atom/RPI.Public/RPISystemInterface.h>
 #include <Atom/RPI.Public/Pass/PassFilter.h>
 #include <Atom/RPI.Reflect/Asset/AssetUtils.h>
@@ -20,7 +21,6 @@
 
 #include <SSRExampleComponent_Traits_Platform.h>
 
-#include "Atom/RPI.Public/RPISystem.h"
 
 namespace AtomSampleViewer
 {
