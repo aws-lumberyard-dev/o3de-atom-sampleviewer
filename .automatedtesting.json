@@ -2,16 +2,16 @@
     "REGISTER_ENGINES": [
     ],
     "REGISTER_PROJECTS": [
-        "AtomSampleViewer"
+        "/"
     ],
     "REGISTER_GEMS": [
-        "Gem/AtomSampleViewerGem"
+        "Gem/"
     ],
     "REGISTER_TEMPLATES": [
     ],
     "REGISTER_RESTRICTED": [
     ],
     "ENABLE_GEMS": [
-        "Gem/AtomSampleViewerGem"
+        "Gem/"
     ]
 }
