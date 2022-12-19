@@ -2,16 +2,20 @@
     "REGISTER_ENGINES": [
     ],
     "REGISTER_PROJECTS": [
-        "/"
     ],
     "REGISTER_GEMS": [
-        "Gem/"
     ],
     "REGISTER_TEMPLATES": [
     ],
     "REGISTER_RESTRICTED": [
     ],
     "ENABLE_GEMS": [
-        "Gem/"
+    ],
+    "REPOS": [
+        {
+            "NAME": "o3de-extras",
+            "URL": "https://github.com/o3de/o3de-extras.git",
+            "BRANCH": "development"
+        }
     ]
 }
