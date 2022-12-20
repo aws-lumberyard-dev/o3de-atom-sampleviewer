@@ -2,6 +2,7 @@
     "REGISTER_ENGINES": [
     ],
     "REGISTER_PROJECTS": [
+        "/"
     ],
     "REGISTER_GEMS": [
     ],
