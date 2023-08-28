@@ -52,7 +52,7 @@ namespace AtomSampleViewer
 
     void SkinnedMeshExampleComponent::CreatePlaneObject()
     {
-        auto meshAsset = AZ::RPI::AssetUtils::GetAssetByProductPath<AZ::RPI::ModelAsset>("objects/plane.azmodel");
+        auto meshAsset = AZ::RPI::AssetUtils::GetAssetByProductPath<AZ::RPI::ModelAsset>("objects/plane.fbx.azmodel");
         m_planeMeshHandle = GetMeshFeatureProcessor()->AcquireMesh(AZ::Render::MeshHandleDescriptor{ meshAsset });
         GetMeshFeatureProcessor()->SetTransform(m_planeMeshHandle, AZ::Transform::CreateIdentity());
     }
@@ -128,6 +128,11 @@ namespace AtomSampleViewer
         }
 
         ScriptableImGui::Checkbox("Draw bones", &m_drawBones);
+
+        if (ScriptableImGui::Button("Reset Clock"))
+        {
+            m_runTime = 0;
+        }
 
         m_imguiSidebar.End();
     }

@@ -68,19 +68,19 @@ namespace AtomSampleViewer
 
         m_expandedModelList =
         {
-            "materialeditor/viewportmodels/cone.azmodel",
-            "materialeditor/viewportmodels/cube.azmodel",
-            "materialeditor/viewportmodels/cylinder.azmodel",
-            "materialeditor/viewportmodels/platonicsphere.azmodel",
-            "materialeditor/viewportmodels/polarsphere.azmodel",
-            "materialeditor/viewportmodels/quadsphere.azmodel",
-            "materialeditor/viewportmodels/torus.azmodel",
-            "objects/cube.azmodel",
-            "objects/cylinder.azmodel",
+            "materialeditor/viewportmodels/cone.fbx.azmodel",
+            "materialeditor/viewportmodels/cube.fbx.azmodel",
+            "materialeditor/viewportmodels/cylinder.fbx.azmodel",
+            "materialeditor/viewportmodels/platonicsphere.fbx.azmodel",
+            "materialeditor/viewportmodels/polarsphere.fbx.azmodel",
+            "materialeditor/viewportmodels/quadsphere.fbx.azmodel",
+            "materialeditor/viewportmodels/torus.fbx.azmodel",
+            "objects/cube.fbx.azmodel",
+            "objects/cylinder.fbx.azmodel",
         };
         m_simpleModelList =
         {
-            "objects/cube.azmodel"
+            "objects/cube.fbx.azmodel"
         };
         m_modelBrowser.SetDefaultPinnedAssets(m_simpleModelList);
     }
@@ -224,19 +224,17 @@ namespace AtomSampleViewer
 
     void HighInstanceTestComponent::OnAllAssetsReadyActivate()
     {
-        AZ::Render::MaterialAssignmentMap materials;
         for (ModelInstanceData& instanceData : m_modelInstanceData)
         {
-            AZ::Render::MaterialAssignment& defaultAssignment = materials[AZ::Render::DefaultMaterialAssignmentId];
-            defaultAssignment = {};
-
+            AZ::Data::Instance<AZ::RPI::Material> materialInstance;
             if (instanceData.m_materialAssetId.IsValid())
             {
-                defaultAssignment.m_materialAsset.Create(instanceData.m_materialAssetId);
-                defaultAssignment.m_materialInstance = AZ::RPI::Material::FindOrCreate(defaultAssignment.m_materialAsset);
+                AZ::Data::Asset<RPI::MaterialAsset> materialAsset;
+                materialAsset.Create(instanceData.m_materialAssetId);
+                materialInstance = AZ::RPI::Material::FindOrCreate(materialAsset);
 
                 // cache the material when its loaded
-                m_cachedMaterials.insert(defaultAssignment.m_materialAsset);
+                m_cachedMaterials.insert(materialAsset);
             }
 
             if (instanceData.m_modelAssetId.IsValid())
@@ -244,7 +242,7 @@ namespace AtomSampleViewer
                 AZ::Data::Asset<AZ::RPI::ModelAsset> modelAsset;
                 modelAsset.Create(instanceData.m_modelAssetId);
 
-                instanceData.m_meshHandle = GetMeshFeatureProcessor()->AcquireMesh(AZ::Render::MeshHandleDescriptor{ modelAsset }, materials);
+                instanceData.m_meshHandle = GetMeshFeatureProcessor()->AcquireMesh(AZ::Render::MeshHandleDescriptor{ modelAsset }, materialInstance);
                 GetMeshFeatureProcessor()->SetTransform(instanceData.m_meshHandle, instanceData.m_transform);
             }
         }
@@ -291,7 +289,7 @@ namespace AtomSampleViewer
         }
         else
         {
-            return AZ::RPI::AssetUtils::GetAssetIdForProductPath("testdata/objects/cube/cube.azmodel", AZ::RPI::AssetUtils::TraceLevel::Error);
+            return AZ::RPI::AssetUtils::GetAssetIdForProductPath("testdata/objects/cube/cube.fbx.azmodel", AZ::RPI::AssetUtils::TraceLevel::Error);
         }
     }
 

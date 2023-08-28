@@ -29,8 +29,8 @@ namespace AtomSampleViewer
         return "LowEndPipelineTemplate";
     }
 
-    int SampleComponentManager::GetDefaultNumMSAASamples()
+    const char* SampleComponentManager::GetMaterialPipelineName()
     {
-        return 1;
+        return "LowEndPipeline";
     }
 } // namespace AtomSampleViewer

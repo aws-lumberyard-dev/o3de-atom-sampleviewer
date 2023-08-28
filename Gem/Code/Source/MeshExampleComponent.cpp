@@ -87,8 +87,12 @@ namespace AtomSampleViewer
         AZ::RPI::RenderPipelineDescriptor pipelineDesc;
         pipelineDesc.m_mainViewTagName = "MainCamera";
         pipelineDesc.m_name = "LowEndPipeline";
+        pipelineDesc.m_materialPipelineTag = "LowEndPipeline";
         pipelineDesc.m_rootPassTemplate = "LowEndPipelineTemplate";
-        pipelineDesc.m_renderSettings.m_multisampleState.m_samples = 4;
+        pipelineDesc.m_renderSettings.m_multisampleState.m_samples = 1;
+        SampleComponentManagerRequestBus::BroadcastResult(
+            pipelineDesc.m_renderSettings.m_multisampleState.m_samples,
+            &SampleComponentManagerRequests::GetNumMSAASamples);
 
         m_lowEndPipeline = AZ::RPI::RenderPipeline::CreateRenderPipelineForWindow(pipelineDesc, *m_windowContext);
     }
@@ -103,8 +107,12 @@ namespace AtomSampleViewer
         AZ::RPI::RenderPipelineDescriptor pipelineDesc;
         pipelineDesc.m_mainViewTagName = "MainCamera";
         pipelineDesc.m_name = "DeferredPipeline";
+        pipelineDesc.m_materialPipelineTag = "DeferredPipeline";
         pipelineDesc.m_rootPassTemplate = "DeferredPipelineTemplate";
-        pipelineDesc.m_renderSettings.m_multisampleState.m_samples = 4;
+        pipelineDesc.m_renderSettings.m_multisampleState.m_samples = 1;
+        SampleComponentManagerRequestBus::BroadcastResult(
+            pipelineDesc.m_renderSettings.m_multisampleState.m_samples,
+            &SampleComponentManagerRequests::GetNumMSAASamples);
         pipelineDesc.m_allowModification = true; // MainPipeline allows modifications, so the DeferredPipeline must as well, to get a consistent result.
 
         m_deferredPipeline = AZ::RPI::RenderPipeline::CreateRenderPipelineForWindow(pipelineDesc, *m_windowContext);
@@ -230,7 +238,7 @@ namespace AtomSampleViewer
 
         AZ::Data::Asset<AZ::RPI::MaterialAsset> groundPlaneMaterialAsset = AZ::RPI::AssetUtils::LoadAssetByProductPath<AZ::RPI::MaterialAsset>(DefaultPbrMaterialPath, AZ::RPI::AssetUtils::TraceLevel::Error);
         m_groundPlaneMaterial = AZ::RPI::Material::FindOrCreate(groundPlaneMaterialAsset);
-        m_groundPlaneModelAsset = AZ::RPI::AssetUtils::GetAssetByProductPath<AZ::RPI::ModelAsset>("objects/plane.azmodel", AZ::RPI::AssetUtils::TraceLevel::Assert);
+        m_groundPlaneModelAsset = AZ::RPI::AssetUtils::GetAssetByProductPath<AZ::RPI::ModelAsset>("objects/plane.fbx.azmodel", AZ::RPI::AssetUtils::TraceLevel::Assert);
 
         AZ::TickBus::Handler::BusConnect();
         AZ::Render::Bootstrap::DefaultWindowNotificationBus::Handler::BusConnect();
@@ -265,7 +273,7 @@ namespace AtomSampleViewer
         m_modelAsset = {};
         m_groundPlaneModelAsset = {};
 
-        m_materialOverrideInstance = nullptr;
+        m_customMaterialInstance = nullptr;
 
         ShutdownLightingPresets();
     }
@@ -413,7 +421,7 @@ namespace AtomSampleViewer
             ImGui::Separator();
             ImGui::Spacing();
 
-            if (m_materialOverrideInstance && ImGui::Button("Material Details..."))
+            if (m_customMaterialInstance && ImGui::Button("Material Details..."))
             {
                 m_imguiMaterialDetails.OpenDialog();
             }
@@ -456,11 +464,11 @@ namespace AtomSampleViewer
         {
             AZ::Data::Asset<AZ::RPI::MaterialAsset> materialAsset;
             materialAsset.Create(selectedMaterialAssetId);
-            m_materialOverrideInstance = AZ::RPI::Material::FindOrCreate(materialAsset);
+            m_customMaterialInstance = AZ::RPI::Material::FindOrCreate(materialAsset);
         }
         else
         {
-            m_materialOverrideInstance = nullptr;
+            m_customMaterialInstance = nullptr;
         }
 
 
@@ -470,14 +478,14 @@ namespace AtomSampleViewer
 
             m_modelAsset.Create(m_modelBrowser.GetSelectedAssetId());
             GetMeshFeatureProcessor()->ReleaseMesh(m_meshHandle);
-            m_meshHandle = GetMeshFeatureProcessor()->AcquireMesh(AZ::Render::MeshHandleDescriptor{ m_modelAsset }, m_materialOverrideInstance);
+            m_meshHandle = GetMeshFeatureProcessor()->AcquireMesh(AZ::Render::MeshHandleDescriptor{ m_modelAsset }, m_customMaterialInstance);
             GetMeshFeatureProcessor()->SetTransform(m_meshHandle, AZ::Transform::CreateIdentity());
             GetMeshFeatureProcessor()->ConnectModelChangeEventHandler(m_meshHandle, m_changedHandler);
             GetMeshFeatureProcessor()->SetMeshLodConfiguration(m_meshHandle, m_lodConfig);
         }
         else
         {
-            GetMeshFeatureProcessor()->SetMaterialAssignmentMap(m_meshHandle, m_materialOverrideInstance);
+            GetMeshFeatureProcessor()->SetCustomMaterials(m_meshHandle, m_customMaterialInstance);
         }
     }
     

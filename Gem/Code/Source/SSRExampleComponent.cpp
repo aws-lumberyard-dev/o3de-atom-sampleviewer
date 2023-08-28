@@ -8,12 +8,14 @@
 
 #include <SSRExampleComponent.h>
 #include <Atom/Component/DebugCamera/NoClipControllerComponent.h>
+#include <Atom/RHI/RHISystemInterface.h>
 #include <Atom/RPI.Public/Scene.h>
 #include <Atom/RPI.Public/RPISystemInterface.h>
 #include <Atom/RPI.Public/Pass/PassFilter.h>
 #include <Atom/RPI.Reflect/Asset/AssetUtils.h>
 #include <Atom/RPI.Reflect/Model/ModelAsset.h>
 #include <Atom/RPI.Reflect/Material/MaterialAsset.h>
+#include <Atom/Feature/SpecularReflections/SpecularReflectionsFeatureProcessorInterface.h>
 #include <Automation/ScriptableImGui.h>
 #include <Automation/ScriptRunnerBus.h>
 #include <Utils/Utils.h>
@@ -49,13 +51,15 @@ namespace AtomSampleViewer
         InitLightingPresets(true);
 
         // enable the SSR pass in the pipeline
-        EnableSSR(true);
+        m_enableSSR = true;
+        UpdateSSROptions();
     }
 
     void SSRExampleComponent::Deactivate()
     {
         // disable the SSR pass in the pipeline
-        EnableSSR(false);
+        m_enableSSR = false;
+        UpdateSSROptions();
 
         ShutdownLightingPresets();
 
@@ -89,7 +93,7 @@ namespace AtomSampleViewer
         // cube
         {
             AZ::Data::Asset<AZ::RPI::MaterialAsset> materialAsset = AZ::RPI::AssetUtils::GetAssetByProductPath<AZ::RPI::MaterialAsset>("materials/ssrexample/cube.azmaterial", AZ::RPI::AssetUtils::TraceLevel::Assert);
-            AZ::Data::Asset<AZ::RPI::ModelAsset> modelAsset = AZ::RPI::AssetUtils::GetAssetByProductPath<AZ::RPI::ModelAsset>("objects/cube.azmodel", AZ::RPI::AssetUtils::TraceLevel::Assert);
+            AZ::Data::Asset<AZ::RPI::ModelAsset> modelAsset = AZ::RPI::AssetUtils::GetAssetByProductPath<AZ::RPI::ModelAsset>("objects/cube.fbx.azmodel", AZ::RPI::AssetUtils::TraceLevel::Assert);
             AZ::Transform transform = AZ::Transform::CreateIdentity();
             transform.SetTranslation(-4.5f, 0.0f, 0.49f);
 
@@ -100,7 +104,7 @@ namespace AtomSampleViewer
         // shader ball
         {
             AZ::Data::Asset<AZ::RPI::MaterialAsset> materialAsset = AZ::RPI::AssetUtils::GetAssetByProductPath<AZ::RPI::MaterialAsset>("Materials/Presets/PBR/default_grid.azmaterial", AZ::RPI::AssetUtils::TraceLevel::Assert);
-            AZ::Data::Asset<AZ::RPI::ModelAsset> modelAsset = AZ::RPI::AssetUtils::GetAssetByProductPath<AZ::RPI::ModelAsset>("objects/ShaderBall_simple.azmodel", AZ::RPI::AssetUtils::TraceLevel::Assert);
+            AZ::Data::Asset<AZ::RPI::ModelAsset> modelAsset = AZ::RPI::AssetUtils::GetAssetByProductPath<AZ::RPI::ModelAsset>("objects/ShaderBall_simple.fbx.azmodel", AZ::RPI::AssetUtils::TraceLevel::Assert);
             AZ::Transform transform = AZ::Transform::CreateIdentity();
             transform *= AZ::Transform::CreateRotationZ(AZ::Constants::Pi);
             transform.SetTranslation(4.5f, 0.0f, 0.89f);
@@ -140,7 +144,7 @@ namespace AtomSampleViewer
         m_groundMaterialAsset.Create(groundMaterialAssetId);
 
         // load mesh
-        AZ::Data::Asset<AZ::RPI::ModelAsset> planeModel = AZ::RPI::AssetUtils::GetAssetByProductPath<AZ::RPI::ModelAsset>("objects/plane.azmodel", AZ::RPI::AssetUtils::TraceLevel::Error);
+        AZ::Data::Asset<AZ::RPI::ModelAsset> planeModel = AZ::RPI::AssetUtils::GetAssetByProductPath<AZ::RPI::ModelAsset>("objects/plane.fbx.azmodel", AZ::RPI::AssetUtils::TraceLevel::Error);
         m_groundMeshHandle = GetMeshFeatureProcessor()->AcquireMesh(AZ::Render::MeshHandleDescriptor{ planeModel }, AZ::RPI::Material::FindOrCreate(m_groundMaterialAsset));
 
         AZ::Transform transform = AZ::Transform::CreateIdentity();
@@ -170,10 +174,29 @@ namespace AtomSampleViewer
             return;
         }
 
+        AZ::RHI::Ptr<AZ::RHI::Device> device = AZ::RHI::RHISystemInterface::Get()->GetDevice();
+        bool rayTracingSupported = device->GetFeatures().m_rayTracing;
+
+        bool optionsChanged = false;
+
         ImGui::NewLine();
-        if (ImGui::Checkbox("Enable SSR", &m_enableSSR))
+        optionsChanged |= ImGui::Checkbox("Enable SSR", &m_enableSSR);
+
+        if (rayTracingSupported)
         {
-            EnableSSR(m_enableSSR);
+            optionsChanged |= ImGui::Checkbox("Hardware Ray Tracing", &m_rayTracing);
+            if (m_rayTracing)
+            {
+                optionsChanged |= ImGui::Checkbox("Ray Trace Fallback Data", &m_rayTraceFallbackData);
+            }
+        }
+
+        ImGui::NewLine();
+        ImGui::Text("Temporal Filtering Strength");
+        optionsChanged |= ImGui::SliderFloat("##Temporal Filtering Strength", &m_temporalFilteringStrength, 0.0f, 3.0f);
+        if (optionsChanged)
+        {
+            UpdateSSROptions();
         }
 
         ImGui::NewLine();
@@ -194,26 +217,20 @@ namespace AtomSampleViewer
         m_imguiSidebar.End();
     }
 
-    void SSRExampleComponent::EnableSSR(bool enabled)
+    void SSRExampleComponent::UpdateSSROptions()
     {
-        // set screen space pass
-        {
-            AZ::RPI::PassFilter passFilter = AZ::RPI::PassFilter::CreateWithPassName(AZ::Name("ReflectionScreenSpacePass"), (AZ::RPI::Scene*) nullptr);
-            AZ::RPI::PassSystemInterface::Get()->ForEachPass(passFilter, [enabled](AZ::RPI::Pass* pass) -> AZ::RPI::PassFilterExecutionFlow
-                {
-                    pass->SetEnabled(enabled);
-                    return  AZ::RPI::PassFilterExecutionFlow::ContinueVisitingPasses;
-                });
-        }
+        AZ::Render::SpecularReflectionsFeatureProcessorInterface* specularReflectionsFeatureProcessor = m_scene->GetFeatureProcessorForEntityContextId<AZ::Render::SpecularReflectionsFeatureProcessorInterface>(GetEntityContextId());
+        AZ_Assert(specularReflectionsFeatureProcessor, "SpecularReflectionsFeatureProcessor not available.");
 
-        // set copy frame buffer pass
-        {
-            AZ::RPI::PassFilter passFilter = AZ::RPI::PassFilter::CreateWithPassName(AZ::Name("ReflectionCopyFrameBufferPass"), (AZ::RPI::Scene*) nullptr);
-            AZ::RPI::PassSystemInterface::Get()->ForEachPass(passFilter, [enabled](AZ::RPI::Pass* pass) -> AZ::RPI::PassFilterExecutionFlow
-                {
-                    pass->SetEnabled(enabled);
-                    return  AZ::RPI::PassFilterExecutionFlow::ContinueVisitingPasses;
-                });
-        }
+        AZ::Render::SSROptions ssrOptions = specularReflectionsFeatureProcessor->GetSSROptions();
+        ssrOptions.m_enable = m_enableSSR;
+        ssrOptions.m_rayTracing = m_rayTracing;
+        ssrOptions.m_rayTraceFallbackData = m_rayTraceFallbackData;
+        ssrOptions.m_coneTracing = false;
+        ssrOptions.m_maxRoughness = 0.5f;
+        ssrOptions.m_maxDepthThreshold = m_maxDepthThreshold;
+        ssrOptions.m_temporalFilteringStrength = m_temporalFilteringStrength;
+
+        specularReflectionsFeatureProcessor->SetSSROptions(ssrOptions);
     }
 }

@@ -10,6 +10,7 @@
 
 //TODO(DeferredPOC): Support clear coat
 #define ENABLE_CLEAR_COAT 0
+#define ENABLE_TRANSMISSION 0
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -18,15 +19,16 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <viewsrg.srgi>
-#include <Atom/RPI/ShaderResourceGroups/DefaultDrawSrg.azsli>
 #include <Atom/Features/PBR/DefaultObjectSrg.azsli>
+#include <Atom/RPI/ShaderResourceGroups/DefaultDrawSrg.azsli>
 #include <Atom/Features/ColorManagement/TransformColor.azsli>
 #include <Atom/Features/PBR/LightingOptions.azsli>
 
-VsOutput MaterialVS(VsInput IN)
+VsOutput MaterialVS(VsInput IN, uint instanceId : SV_InstanceID)
 {
-    VsOutput OUT = EvaluateVertexGeometry(IN);
-    return OUT;
+    VsSystemValues SV;
+    SV.m_instanceId = instanceId;
+    return EvaluateVertexGeometry(IN, SV);
 }
 
 struct DeferredMaterialOutput
@@ -40,6 +42,7 @@ struct DeferredMaterialOutput
 #endif
 };
 
+// TODO(MaterialPipeline): Probably replace this with FORCE_EARLY_DEPTH_STENCIL like how it's done in MultiViewForwardPassVertexAndPixel.azsli
 #if !OUTPUT_DEPTH
     [earlydepthstencil]
 #endif
@@ -49,7 +52,7 @@ DeferredMaterialOutput MaterialPS(VsOutput IN, bool isFrontFace : SV_IsFrontFace
 
     PixelGeometryData geoData = EvaluatePixelGeometry(IN, isFrontFace);
 
-    Surface surface = EvaluateSurface(geoData);
+    Surface surface = EvaluateSurface(IN, geoData);
 
     // ------- Output -------
 

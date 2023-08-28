@@ -30,14 +30,14 @@ namespace AtomSampleViewer
         return "MainPipeline";
     }
 
-    int SampleComponentManager::GetDefaultNumMSAASamples()
+    const char* SampleComponentManager::GetMaterialPipelineName()
     {
-        // Use sample count of 1 for VR pipelines
+        // Use Low end pipeline template for VR
         AZ::RPI::XRRenderingInterface* xrSystem = AZ::RPI::RPISystemInterface::Get()->GetXRSystem();
         if (xrSystem)
         {
-            return 1;
+            return "LowEndPipeline";
         }
-        return 4;
+        return "MainPipeline";
     }
 } // namespace AtomSampleViewer

@@ -50,6 +50,7 @@ ly_add_target(
 # if enabled, AtomSampleViewer is used by the Client and ServerLauncher
 ly_create_alias(NAME AtomSampleViewer.Clients  NAMESPACE Gem TARGETS Gem::AtomSampleViewer)
 ly_create_alias(NAME AtomSampleViewer.Servers  NAMESPACE Gem TARGETS Gem::AtomSampleViewer)
+ly_create_alias(NAME AtomSampleViewer.Unified  NAMESPACE Gem TARGETS Gem::AtomSampleViewer)
 
 if(PAL_TRAIT_BUILD_HOST_TOOLS)
 
@@ -120,12 +121,6 @@ if(PAL_TRAIT_BUILD_SUPPORTS_TESTS)
     )
 endif()
 
-
-################################################################################
-# Gem dependencies
-################################################################################
-
-ly_enable_gems(PROJECT_NAME AtomSampleViewer GEM_FILE enabled_gems.cmake)
 
 # If we build a server, then apply the gems to the server
 if(PAL_TRAIT_BUILD_SERVER_SUPPORTED)

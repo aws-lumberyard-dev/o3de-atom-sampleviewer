@@ -29,10 +29,13 @@
 #include <Atom/RPI.Public/Scene.h>
 #include <Atom/RPI.Reflect/Asset/AssetUtils.h>
 #include <Atom/RPI.Reflect/Image/AttachmentImageAsset.h>
+#include <Atom/RPI.Reflect/Image/AttachmentImageAssetCreator.h>
 #include <Atom/RPI.Reflect/Shader/IShaderVariantFinder.h>
 
 #include <Atom/RHI/Factory.h>
 #include <Atom/RHI/RHISystemInterface.h>
+#include <Atom/RHI/RHIMemoryStatisticsInterface.h>
+#include <Atom/RHI/RHIUtils.h>
 #include <Atom/RHI.Reflect/AliasedHeapEnums.h>
 
 #include <Automation/ScriptManager.h>
@@ -153,33 +156,9 @@ namespace AtomSampleViewer
         constexpr const char* SampleSetting = "/O3DE/AtomSampleViewer/Sample";
     }
 
-    bool IsValidNumMSAASamples(int numSamples)
+    bool IsValidNumMSAASamples(int16_t numSamples)
     {
         return (numSamples == 1) || (numSamples == 2) || (numSamples == 4) || (numSamples == 8);
-    }
-
-    template <typename T>
-    static SampleEntry NewSample(SamplePipelineType type, const char* menuName, const AZStd::string& name)
-    {
-        SampleEntry entry;
-        entry.m_sampleName = name;
-        entry.m_sampleUuid = azrtti_typeid<T>();
-        entry.m_pipelineType = type;
-        entry.m_componentDescriptor = T::CreateDescriptor();
-        entry.m_parentMenuName = menuName;
-        entry.m_fullName = entry.m_parentMenuName + '/' + entry.m_sampleName;
-        entry.m_contentWarning = T::ContentWarning;
-        entry.m_contentWarningTitle = T::ContentWarningTitle;
-
-        return entry;
-    }
-
-    template <typename T>
-    static SampleEntry NewSample(SamplePipelineType type, const char* menuName, const AZStd::string& name, AZStd::function<bool()> isSupportedFunction)
-    {
-        SampleEntry entry = NewSample<T>(type, menuName, name);
-        entry.m_isSupportedFunc = isSupportedFunction;
-        return entry;
     }
 
     template <typename T>
@@ -275,6 +254,11 @@ namespace AtomSampleViewer
         required.push_back(AZ_CRC("PrototypeLmbrCentralService", 0xe35e6de0));
     }
 
+    void SampleComponentManager::GetProvidedServices(AZ::ComponentDescriptor::DependencyArrayType& provided)
+    {
+        provided.push_back(AZ_CRC_CE("SampleComponentManagerService"));
+    }
+
     void SampleComponentManager::GetDependentServices(AZ::ComponentDescriptor::DependencyArrayType& dependent)
     {
         dependent.push_back(AZ_CRC("AzFrameworkConfigurationSystemComponentService", 0xcc49c96e)); // Ensures a scene is created for the GameEntityContext
@@ -285,7 +269,7 @@ namespace AtomSampleViewer
         return {
             NewRHISample<AlphaToCoverageExampleComponent>("AlphaToCoverage"),
             NewRHISample<AsyncComputeExampleComponent>("AsyncCompute"),
-            NewRHISample<BindlessPrototypeExampleComponent>("BindlessPrototype", []() {return Utils::GetRHIDevice()->GetFeatures().m_unboundedArrays; }),
+            NewRHISample<BindlessPrototypeExampleComponent>("BindlessPrototype"),
             NewRHISample<ComputeExampleComponent>("Compute"),
             NewRHISample<CopyQueueComponent>("CopyQueue"),
             NewRHISample<DualSourceBlendingComponent>("DualSourceBlending", []() {return Utils::GetRHIDevice()->GetFeatures().m_dualSourceBlending; }),
@@ -361,6 +345,18 @@ namespace AtomSampleViewer
         }
     }
 
+    ScriptManager* SampleComponentManager::GetScriptManagerInstance()
+    {
+        AZ_Assert(m_scriptManager, "Script Manager is nullptr");
+        return m_scriptManager.get();
+    }
+
+    ScriptableImGui* SampleComponentManager::GetScriptableImGuiInstance()
+    {
+        AZ_Assert(m_scriptableImGui, "Scriptable ImGui is nullptr");
+        return m_scriptableImGui.get();
+    }
+
     SampleComponentManager::SampleComponentManager()
         : m_imguiFrameCaptureSaver("@user@/frame_capture.xml")
     {
@@ -389,6 +385,7 @@ namespace AtomSampleViewer
         }
 
         m_scriptManager = AZStd::make_unique<ScriptManager>();
+        m_scriptableImGui = AZStd::make_unique<ScriptableImGui>();
     }
 
     void SampleComponentManager::Activate()
@@ -396,13 +393,12 @@ namespace AtomSampleViewer
         // We can only initialize this component after the asset catalog has been loaded.
         AzFramework::AssetCatalogEventBus::Handler::BusConnect();
         AZ::Render::ImGuiSystemNotificationBus::Handler::BusConnect();
+        SampleComponentSingletonRequestBus::Handler::BusConnect();
 
         auto* passSystem = AZ::RPI::PassSystemInterface::Get();
         AZ_Assert(passSystem, "Cannot get the pass system.");
 
         passSystem->AddPassCreator(Name("RayTracingAmbientOcclusionPass"), &AZ::Render::RayTracingAmbientOcclusionPass::Create);
-
-        m_numMSAASamples = GetDefaultNumMSAASamples();
     }
 
     void SampleComponentManager::ActivateInternal()
@@ -559,6 +555,7 @@ namespace AtomSampleViewer
         AZ::Render::ImGuiSystemNotificationBus::Handler::BusDisconnect();
         m_scriptManager->Deactivate();
         m_imguiFrameCaptureSaver.Deactivate();
+        SampleComponentSingletonRequestBus::Handler::BusDisconnect();
         SampleComponentManagerRequestBus::Handler::BusDisconnect();
         AZ::TickBus::Handler::BusDisconnect();
         AzFramework::InputChannelEventListener::Disconnect();
@@ -570,6 +567,7 @@ namespace AtomSampleViewer
 
         m_windowContext = nullptr;
         m_brdfTexture.reset();
+        m_xrVrsTexture.reset();
 
         ReleaseRHIScene();
         ReleaseRPIScene();
@@ -667,12 +665,19 @@ namespace AtomSampleViewer
             }
             else if (m_countdownForFrameCapture == 0)
             {
-                AZ::Render::FrameCaptureRequestBus::BroadcastResult(m_frameCaptureId, &AZ::Render::FrameCaptureRequestBus::Events::CaptureScreenshot, m_frameCaptureFilePath);
-                if (m_frameCaptureId != AZ::Render::InvalidFrameCaptureId ) // if unsuccessfull leave state to attempt again next tick
+                AZ::Render::FrameCaptureOutcome capOutcome;
+                AZ::Render::FrameCaptureRequestBus::BroadcastResult(capOutcome, &AZ::Render::FrameCaptureRequestBus::Events::CaptureScreenshot, m_frameCaptureFilePath);
+                if (capOutcome.IsSuccess()) // if unsuccessfull leave state to attempt again next tick
                 {
+                    m_frameCaptureId = capOutcome.GetValue();
+
                     AZ::Render::FrameCaptureNotificationBus::Handler::BusConnect(m_frameCaptureId);
 
                     m_countdownForFrameCapture = -1; // Don't call CaptureScreenshot again
+                }
+                else
+                {
+                    m_frameCaptureId = AZ::Render::InvalidFrameCaptureId;
                 }
             }
         }
@@ -1172,7 +1177,7 @@ namespace AtomSampleViewer
 
     void SampleComponentManager::ShowTransientAttachmentProfilerWindow()
     {
-        auto* transientStats = AZ::RHI::RHISystemInterface::Get()->GetTransientAttachmentStatistics();
+        auto* transientStats = AZ::RHI::RHIMemoryStatisticsInterface::Get()->GetTransientAttachmentStatistics();
         if (transientStats)
         {
             m_showTransientAttachmentProfiler = m_imguiTransientAttachmentProfiler.Draw(*transientStats);
@@ -1289,16 +1294,31 @@ namespace AtomSampleViewer
         }
     }
 
-    void SampleComponentManager::SetNumMSAASamples(int numMSAASamples)
+    void SampleComponentManager::SetNumMSAASamples(int16_t numMSAASamples)
     {
         AZ_Assert(IsValidNumMSAASamples(numMSAASamples), "Invalid MSAA sample setting");
 
-        m_numMSAASamples = numMSAASamples;
+        m_numMsaaSamples = numMSAASamples;
+    }
+
+    int16_t SampleComponentManager::GetNumMSAASamples()
+    {
+        return m_numMsaaSamples;
+    }
+
+    void SampleComponentManager::SetDefaultNumMSAASamples(int16_t defaultNumMsaaSamples)
+    {
+        m_defaultNumMsaaSamples = defaultNumMsaaSamples;
+    }
+
+    int16_t SampleComponentManager::GetDefaultNumMSAASamples()
+    {
+        return m_defaultNumMsaaSamples;
     }
 
     void SampleComponentManager::ResetNumMSAASamples()
     {
-        m_numMSAASamples = GetDefaultNumMSAASamples();
+        m_numMsaaSamples = m_defaultNumMsaaSamples;
     }
 
     void SampleComponentManager::ResetRPIScene()
@@ -1717,8 +1737,8 @@ namespace AtomSampleViewer
         RPI::RPISystemInterface::Get()->RegisterScene(m_rpiScene);
 
         // set pipeline MSAA samples
-        AZ_Assert(IsValidNumMSAASamples(m_numMSAASamples), "Invalid MSAA sample setting");
-        const bool isNonMsaaPipeline = (m_numMSAASamples == 1);
+        AZ_Assert(IsValidNumMSAASamples(m_numMsaaSamples), "Invalid MSAA sample setting");
+        const bool isNonMsaaPipeline = (m_numMsaaSamples == 1);
         const char* supervariantName = isNonMsaaPipeline ? AZ::RPI::NoMsaaSupervariantName : "";
         AZ::RPI::ShaderSystemInterface::Get()->SetSupervariantName(AZ::Name(supervariantName));
 
@@ -1731,9 +1751,10 @@ namespace AtomSampleViewer
             RPI::RenderPipelineDescriptor pipelineDesc;
             pipelineDesc.m_name = "RPISamplePipeline";
             pipelineDesc.m_rootPassTemplate = GetRootPassTemplateName();
+            pipelineDesc.m_materialPipelineTag = GetMaterialPipelineName();
             pipelineDesc.m_mainViewTagName = "MainCamera";
             pipelineDesc.m_allowModification = true;
-            pipelineDesc.m_renderSettings.m_multisampleState.m_samples = static_cast<uint16_t>(m_numMSAASamples);
+            pipelineDesc.m_renderSettings.m_multisampleState.m_samples = static_cast<uint16_t>(m_numMsaaSamples);
 
             m_renderPipeline = RPI::RenderPipeline::CreateRenderPipelineForWindow(pipelineDesc, *m_windowContext.get());
             m_rpiScene->AddRenderPipeline(m_renderPipeline);
@@ -1749,18 +1770,31 @@ namespace AtomSampleViewer
 
         if (xrSystem)
         {
+            RHI::Ptr<RHI::Device> device = Utils::GetRHIDevice();
+            if (RHI::CheckBitsAll(device->GetFeatures().m_shadingRateTypeMask, RHI::ShadingRateTypeFlags::PerRegion) && !m_xrVrsTexture)
+            {
+                auto* xrRPISystem = AZ::RPI::RPISystemInterface::Get()->GetXRSystem();
+                // Need to fill the contents of the Variable shade rating image.
+                const AZStd::shared_ptr<const RPI::PassTemplate> forwardTemplate =
+                    RPI::PassSystemInterface::Get()->GetPassTemplate(Name("MultiViewForwardPassTemplate"));
+
+                m_xrVrsTexture = xrRPISystem->InitPassFoveatedAttachment(*forwardTemplate);
+            }
+
             RPI::RenderPipelineDescriptor xrPipelineDesc;
             xrPipelineDesc.m_mainViewTagName = "MainCamera";
-            xrPipelineDesc.m_renderSettings.m_multisampleState.m_samples = static_cast<uint16_t>(m_numMSAASamples);
+            xrPipelineDesc.m_renderSettings.m_multisampleState.m_samples = static_cast<uint16_t>(m_numMsaaSamples);
 
             // Build the pipeline for left eye
             xrPipelineDesc.m_name = "RPISamplePipelineXRLeft";
-            xrPipelineDesc.m_rootPassTemplate = "LowEndPipelineXRLeftTemplate";
+            xrPipelineDesc.m_materialPipelineTag = "MultiViewPipeline";
+            xrPipelineDesc.m_rootPassTemplate = "MultiViewPipelineTemplate";
             RPI::RenderPipelinePtr renderPipelineLeft = RPI::RenderPipeline::CreateRenderPipelineForWindow(xrPipelineDesc, *m_windowContext.get(), AZ::RPI::ViewType::XrLeft);
 
             // Build the pipeline for right eye
             xrPipelineDesc.m_name = "RHISamplePipelineXRRight";
-            xrPipelineDesc.m_rootPassTemplate = "LowEndPipelineXRRightTemplate";
+            xrPipelineDesc.m_materialPipelineTag = "MultiViewPipeline";
+            xrPipelineDesc.m_rootPassTemplate = "MultiViewPipelineTemplate";
             RPI::RenderPipelinePtr renderPipelineRight = RPI::RenderPipeline::CreateRenderPipelineForWindow(xrPipelineDesc, *m_windowContext.get(), AZ::RPI::ViewType::XrRight);
 
             //Add both the pipelines to the scene
@@ -1808,8 +1842,10 @@ namespace AtomSampleViewer
     {
         if (m_rpiScene)
         {
-            RPI::RPISystemInterface::Get()->UnregisterScene(m_rpiScene);
+            m_xrPipelines.clear();
+            m_renderPipeline = nullptr;
 
+            RPI::RPISystemInterface::Get()->UnregisterScene(m_rpiScene);
             auto sceneSystem = AzFramework::SceneSystemInterface::Get();
             AZ_Assert(sceneSystem, "Scene system was destroyed before SampleComponentManager was able to unregister the RPI scene.");
             AZStd::shared_ptr<AzFramework::Scene> scene = sceneSystem->GetScene(AzFramework::Scene::MainSceneName);
@@ -1817,7 +1853,6 @@ namespace AtomSampleViewer
             [[maybe_unused]] bool result = scene->UnsetSubsystem(m_rpiScene);
             AZ_Assert(result, "SampleComponentManager failed to unregister its RPI scene from the general scene.");
             
-            m_xrPipelines.clear();
             m_rpiScene = nullptr;
         }
     }

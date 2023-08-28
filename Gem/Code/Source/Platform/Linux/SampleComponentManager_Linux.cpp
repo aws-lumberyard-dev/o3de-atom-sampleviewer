@@ -24,8 +24,8 @@ namespace AtomSampleViewer
         return "MainPipeline";
     }
     
-    int SampleComponentManager::GetDefaultNumMSAASamples()
+    const char* SampleComponentManager::GetMaterialPipelineName()
     {
-        return 4;
+        return "MainPipeline";
     }
 } // namespace AtomSampleViewer
